@@ -23,10 +23,11 @@ export const initializeFabric = ({
 }) => {
   const canvasElement = document.getElementById("canvas");
 
-  const canvas = new fabric.Canvas(canvasRef.current, {
-    width: canvasElement?.clientWidth,
-    height: canvasElement?.clientHeight,
-  });
+  // Fall back to window dimensions when the container element is not yet mounted
+  const width = canvasElement?.clientWidth ?? window.innerWidth;
+  const height = canvasElement?.clientHeight ?? window.innerHeight;
+
+  const canvas = new fabric.Canvas(canvasRef.current, { width, height });
 
   fabricRef.current = canvas;
 
@@ -280,24 +281,29 @@ export const renderCanvas = ({
   canvasObjects,
   activeObjectRef,
 }: RenderCanvas) => {
-  fabricRef.current?.clear();
+  // Guard: storage may be null/undefined during initial load
+  if (!canvasObjects || !fabricRef.current) return;
+
+  fabricRef.current.clear();
 
   Array.from(canvasObjects, ([objectId, objectData]) => {
+    if (!objectData) return;
+
     fabric.util.enlivenObjects(
       [objectData],
       (enlivenedObjects: fabric.Object[]) => {
         enlivenedObjects.forEach((enlivenedObj) => {
-          if (activeObjectRef.current?.objectId === objectId) {
-            fabricRef.current?.setActiveObject(enlivenedObj);
+          if (!fabricRef.current) return;
+          if ((activeObjectRef.current as any)?.objectId === objectId) {
+            fabricRef.current.setActiveObject(enlivenedObj);
           }
-          fabricRef.current?.add(enlivenedObj);
+          fabricRef.current.add(enlivenedObj);
         });
+        fabricRef.current?.renderAll();
       },
       "fabric"
     );
   });
-
-  fabricRef.current?.renderAll();
 };
 
 // Adjust canvas size when the window is resized

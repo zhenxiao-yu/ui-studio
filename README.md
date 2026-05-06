@@ -1,124 +1,250 @@
-# UI Studio 
+# UI Studio
 
-Author: ZhenXiao (Mark) Yu © 2024
+**A real-time collaborative design canvas for the web.**
 
-## Table of Contents
+Draw shapes, annotate with comments, chat with your team, and export your work — all synchronized live across every connected browser.
 
-1. [Introduction](#introduction)
-2. [Tech Stack](#tech-stack)
-3. [Features](#features)
-4. [How To Run](#how-to-run)
+> Built as a serious portfolio project and open-source reference for real-time collaborative canvas applications.
 
-## Introduction
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-ui--studio--mu.vercel.app-brightgreen)](https://ui-studio-mu.vercel.app)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
 
-UI Studio is a streamlined, minimalist web-based application tailored for PC users and offered completely free of charge. Designed to emulate a professional collaborative user interface design environment, UI Studio integrates essential features such as live collaboration, real-time cursor tracking, integrated chat, commenting, and dynamic drawing capabilities. Leveraging cutting-edge technologies like Next.js, TypeScript, and Fabric.js, the application provides a robust platform for exploring and mastering real-time web applications and collaborative design processes. With its intuitive, user-friendly interface, UI Studio ensures a seamless and interactive experience, enabling teams to collaborate effectively and creatively in a virtual workspace. Discover how UI Studio can enhance your design workflow and facilitate efficient team collaboration.
+---
 
-## Tech Stack
+## Screenshots
 
-The application utilizes a modern technology stack to ensure high performance, scalability, and ease of development:
+> _Add screenshots or a GIF of the canvas in action here._
 
-- **Next.js**: A React framework that facilitates server-side rendering and static site generation, enhancing performance and SEO.
-- **TypeScript**: A superset of JavaScript that introduces static typing, which helps catch type-related errors during development and leads to more robust and maintainable code.
-- **Tailwind CSS**: A utility-first CSS framework that accelerates UI development with consistent and adaptable styling.
-- **Fabric.js**: A powerful JavaScript library for working with HTML5 canvas, making it easier to develop interactive design tools.
-- **Liveblocks**: A library that supports real-time collaboration features, including multi-user presence, cursor tracking, and shared state management.
-- **Shadcn**: A library designed for creating accessible and highly customizable UI components.
+---
 
 ## Features
 
-UI Studio offers a comprehensive set of features designed to enhance the collaborative and interactive design experience:
+| Feature | Description |
+|---|---|
+| **Multi-user canvas** | Draw and edit shapes simultaneously with collaborators |
+| **Live cursors** | See every connected user's cursor position in real time |
+| **Cursor chat** | Press `/` to send ephemeral messages via your cursor |
+| **Emoji reactions** | Press `E` to pick and broadcast floating emoji reactions |
+| **Pinned comments** | Click the comment tool to attach threaded notes to any canvas position |
+| **Shape tools** | Rectangle, circle, triangle, line, freeform drawing |
+| **Image import** | Upload images directly onto the canvas |
+| **Text tool** | Add and edit inline text on the canvas |
+| **Property inspector** | Edit width, height, fill color, stroke, font family/size/weight |
+| **Layer panel** | View all canvas objects; click to select |
+| **Object ordering** | Bring to front / send to back |
+| **Zoom** | Scroll to zoom; live zoom indicator |
+| **Undo / Redo** | Full collaborative history via Liveblocks |
+| **Keyboard shortcuts** | Copy, paste, cut, delete, undo, redo — see shortcut panel |
+| **PNG export** | Export the canvas as a PNG image |
+| **PDF export** | Export the canvas as a PDF document |
+| **Multi-room** | Each board gets a unique URL; share to collaborate |
+| **Onboarding** | First-visit guide for new users |
+| **Connection status** | Live indicator showing sync state |
 
-#### Multi-Cursors, Cursor Chat, and Reactions
+---
 
-This feature enables real-time collaboration by displaying individual user cursors within the design environment. Users can interact through cursor chat, which allows for real-time messaging, and reactions, which facilitate quick feedback and communication. This enhances the collaborative aspect of the design process, making teamwork more fluid and dynamic.
+## Tech Stack
 
-#### Active Users
+| Layer | Technology |
+|---|---|
+| Framework | [Next.js 14](https://nextjs.org/) (App Router) |
+| Language | [TypeScript](https://www.typescriptlang.org/) (strict mode) |
+| Canvas | [Fabric.js v5](http://fabricjs.com/) |
+| Real-time | [Liveblocks](https://liveblocks.io/) (presence, storage, comments) |
+| Styling | [Tailwind CSS](https://tailwindcss.com/) |
+| UI Primitives | [Radix UI](https://www.radix-ui.com/) |
+| Notifications | [Sonner](https://sonner.emilkowal.ski/) |
+| Animations | [Framer Motion](https://www.framer.com/motion/) |
+| PDF Export | [jsPDF](https://github.com/parallax/jsPDF) |
+| Icons | [Lucide React](https://lucide.dev/) |
 
-A list of currently active users is displayed, providing visibility into who is participating in the collaborative session. This feature helps manage interactions among team members, ensuring everyone is aware of who is working on the project and facilitating better coordination.
+---
 
-#### Comment Bubbles
+## Architecture
 
-Users can attach comments directly to specific elements on the canvas. This feature supports detailed feedback and discussion, which is crucial for collaborative reviews and iterative design improvements. Comment bubbles make it easy to provide context-specific notes and suggestions.
+```
+app/
+  page.tsx              # Home — creates a new board UUID, redirects
+  layout.tsx            # Root layout: fonts, ErrorBoundary, Toaster
+  board/[roomId]/
+    page.tsx            # Canvas board: wraps App in Room provider
+  App.tsx               # Canvas orchestration (Fabric lifecycle + Liveblocks mutations)
+  Room.tsx              # Liveblocks RoomProvider wrapper
 
-#### Creating Different Shapes
+components/
+  Navbar.tsx            # Tool selector, active users, connection status
+  LeftSidebar.tsx       # Layers panel (click-to-select)
+  RightSidebar.tsx      # Property inspector, element order, export
+  Live.tsx              # Canvas interaction area: cursors, reactions, comments, zoom
+  Loader.tsx            # Suspense fallback
+  ErrorBoundary.tsx     # Catches and displays runtime errors
+  Onboarding.tsx        # First-visit modal
+  comments/             # Liveblocks Comments UI components
+  cursor/               # Cursor rendering and chat
+  reaction/             # Flying emoji reactions
+  settings/             # Color, dimensions, text, export sub-panels
+  users/                # Active users avatars
+  ui/                   # Radix-based primitives (button, tooltip, etc.)
 
-The toolset includes functionality for generating various shapes on the canvas, such as rectangles, circles, and polygons. This allows designers to construct and manipulate diverse design elements efficiently, providing the flexibility needed for detailed and complex designs.
+lib/
+  canvas.ts             # Fabric.js canvas helpers (init, events, render, zoom)
+  shapes.ts             # Shape creation, modification, ordering, image upload
+  key-events.ts         # Keyboard shortcut handlers
+  utils.ts              # cn(), name generation, PNG/PDF export
 
-#### Uploading Images
+liveblocks.config.ts    # Liveblocks client, room context, types
+constants/index.ts      # Nav elements, shape configs, shortcuts, colors
+types/type.ts           # Shared TypeScript types
+```
 
-Users can import images onto the canvas, broadening the range of visual content available for design. This feature is essential for integrating external assets, such as logos or illustrations, and enhancing the overall visual appeal of the project.
+### Liveblocks Storage Schema
 
-#### Customization
+```ts
+Storage = {
+  canvasObjects: LiveMap<objectId: string, fabricJSON: object>
+}
 
-Design elements can be extensively customized, with users able to adjust properties such as color, size, and style. This flexibility ensures that each design element can be tailored to meet specific project requirements and personal preferences.
+Presence = {
+  cursor: { x: number; y: number } | null
+  cursorColor: string | null
+  editingText: string | null
+  message?: string
+}
+```
 
-#### Freeform Drawing
+---
 
-The application supports freeform drawing, enabling users to sketch and create unique design elements directly on the canvas. This feature is ideal for artistic expression and brainstorming, allowing for spontaneous and creative design development.
-
-#### Undo/Redo
-
-The undo and redo functionalities allow users to easily reverse or restore actions, providing flexibility and control during the design process. This feature is vital for correcting mistakes and experimenting with different design approaches.
-
-#### Keyboard Actions
-
-Keyboard shortcuts streamline various actions, including copying, pasting, deleting, and accessing features like cursor chat and reactions. This enhancement improves efficiency and makes the design process more accessible and responsive.
-
-#### History
-
-A chronological history of actions and changes made on the canvas is maintained, helping with project management and version control. This feature tracks the evolution of the design, allowing users to review and revert to previous states if needed.
-
-#### Managing Canvas Elements
-
-The application provides comprehensive tools for managing design elements, including options for deleting, scaling, moving, clearing the canvas, and exporting the final design. These capabilities ensure complete control over the design process and facilitate the transition from concept to implementation.
-
-## How to Run
-
-Follow these steps to set up the project on your local machine.
+## Getting Started
 
 ### Prerequisites
 
-Before starting, make sure you have the following installed:
-
-- [Git](https://git-scm.com/)
-- [Node.js](https://nodejs.org/en)
+- [Node.js 18+](https://nodejs.org/)
 - [npm](https://www.npmjs.com/)
+- A [Liveblocks](https://liveblocks.io/) account (free tier works)
 
-### Clone the Repository
-
-Begin by cloning the repository to your local machine:
+### 1. Clone
 
 ```bash
-git clone https://github.com/JavaScript-Mastery-Pro/figma-ts.git
-cd figma-ts
+git clone https://github.com/zhenxiao-yu/ui-studio.git
+cd ui-studio
 ```
 
-### Install Dependencies
-
-Next, install the necessary project dependencies:
+### 2. Install
 
 ```bash
 npm install
 ```
 
-### Configure Environment Variables
+### 3. Configure environment variables
 
-Create a new file named `.env.local` in the root directory of your project and add the following line:
+Copy the example file:
 
-```env
-NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY=
+```bash
+cp .env.example .env.local
 ```
 
-Make sure to replace the placeholder with your actual Liveblocks credentials. You can obtain these credentials by registering on the [Liveblocks website](https://liveblocks.io).
+Edit `.env.local` and fill in your Liveblocks public key:
 
-### Start the Project
+```env
+NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY=pk_dev_your_key_here
+```
 
-To run the development server, use the following command:
+Get your key at [liveblocks.io/dashboard](https://liveblocks.io/dashboard) → Project → API Keys.
+
+### 4. Run
 
 ```bash
 npm run dev
 ```
 
-You can then view the project by navigating to [http://localhost:3000](http://localhost:3000) in your web browser.
+Open [http://localhost:3000](http://localhost:3000). Click **Create New Board** to start a session. Share the URL with collaborators.
 
-------
+---
+
+## Scripts
+
+| Script | Description |
+|---|---|
+| `npm run dev` | Start development server |
+| `npm run build` | Production build |
+| `npm run start` | Start production server |
+| `npm run lint` | Run ESLint |
+| `npm run typecheck` | Run TypeScript compiler check (no emit) |
+
+---
+
+## Deployment
+
+### Vercel (recommended)
+
+1. Push to GitHub.
+2. Import the repo in [Vercel](https://vercel.com/).
+3. Add the environment variable `NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY` in Project Settings → Environment Variables.
+4. Deploy.
+
+For production, replace the `pk_dev_` key with a `pk_live_` key from the Liveblocks dashboard.
+
+### Manual
+
+```bash
+npm run build
+npm run start
+```
+
+---
+
+## Keyboard Shortcuts
+
+| Action | Shortcut |
+|---|---|
+| Cursor chat | `/` |
+| Emoji reactions | `E` |
+| Undo | `Ctrl / ⌘ + Z` |
+| Redo | `Ctrl / ⌘ + Y` |
+| Copy | `Ctrl / ⌘ + C` |
+| Paste | `Ctrl / ⌘ + V` |
+| Cut | `Ctrl / ⌘ + X` |
+| Delete selected | `Delete` / `Backspace` |
+| Escape / cancel | `Escape` |
+| Zoom | Scroll wheel |
+| Show shortcuts | `?` button (canvas bottom-right) |
+
+---
+
+## Known Limitations
+
+- **Desktop-first**: The canvas editor requires a mouse and keyboard. A simplified view is shown on mobile devices.
+- **Anonymous users**: No authentication system — users are identified by random animal names per session. Liveblocks comment mentions are not wired to real accounts.
+- **Room persistence**: Board data persists in Liveblocks storage for as long as your Liveblocks project retains it (depends on your plan). There is no server-side project file save beyond Liveblocks.
+- **Fabric.js v5**: Uses Fabric.js v5 API. Not compatible with v6 patterns without migration.
+- **No auth**: The room ID in the URL is the only access control. Anyone with the link can join.
+- **Zoom cap**: Maximum zoom is 100%. You cannot zoom in beyond 1:1.
+
+---
+
+## Roadmap
+
+- [ ] Object-level canvas diffing (avoid full re-render on every storage update)
+- [ ] Canvas hooks refactor (extract god component `App.tsx` into focused hooks)
+- [ ] Tablet / collapsible sidebar layout
+- [ ] JSON project export/import
+- [ ] SVG export
+- [ ] User authentication + room access control
+- [ ] Duplicate object
+- [ ] Multi-select alignment tools
+- [ ] Infinite canvas / pan mode
+- [ ] Test suite (Vitest + Playwright)
+
+---
+
+## Credits
+
+Developed by [ZhenXiao (Mark) Yu](https://github.com/zhenxiao-yu).
+
+Built on top of the Liveblocks, Fabric.js, and Next.js ecosystems.
+
+---
+
+## License
+
+MIT © 2024 ZhenXiao Yu

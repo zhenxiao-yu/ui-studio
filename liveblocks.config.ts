@@ -1,9 +1,19 @@
 import { LiveMap, createClient } from "@liveblocks/client";
 import { createRoomContext } from "@liveblocks/react";
 
+const liveblocksKey = process.env.NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY;
+
+if (!liveblocksKey && typeof window !== "undefined") {
+  console.error(
+    "[UI Studio] NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY is not set.\n" +
+      "Copy .env.example to .env.local and add your Liveblocks public key.\n" +
+      "Get one at https://liveblocks.io/dashboard"
+  );
+}
+
 const client = createClient({
   throttle: 16,
-  publicApiKey: process.env.NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY!,
+  publicApiKey: liveblocksKey ?? "",
 });
 
 type Presence = {

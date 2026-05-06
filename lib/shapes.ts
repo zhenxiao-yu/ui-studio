@@ -96,20 +96,26 @@ export const handleImageUpload = ({
   shapeRef,
   syncShapeInStorage,
 }: ImageUpload) => {
+  // Guard: user may cancel the file dialog (file is undefined)
+  if (!file) return;
+  if (!canvas.current) return;
+
   const reader = new FileReader();
 
   reader.onload = () => {
-    fabric.Image.fromURL(reader.result as string, (img) => {
+    if (!reader.result || typeof reader.result !== "string") return;
+    if (!canvas.current) return;
+
+    fabric.Image.fromURL(reader.result, (img) => {
+      if (!canvas.current) return;
+
       img.scaleToWidth(200);
       img.scaleToHeight(200);
 
+      (img as CustomFabricObject<fabric.Image>).objectId = uuidv4();
+
       canvas.current.add(img);
-
-      // @ts-ignore
-      img.objectId = uuidv4();
-
       shapeRef.current = img;
-
       syncShapeInStorage(img);
       canvas.current.requestRenderAll();
     });

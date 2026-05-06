@@ -1,12 +1,13 @@
 {
-  "name": "tigma",
-  "version": "0.1.0",
+  "name": "ui-studio",
+  "version": "0.2.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@liveblocks/client": "^1.9.7",

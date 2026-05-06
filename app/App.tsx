@@ -178,8 +178,7 @@ const Home = () => {
     // if the store doesn't exist or is empty, return
     if (!canvasObjects || canvasObjects.size === 0) return true;
 
-    // delete all the shapes from the store
-    for (const [key, value] of canvasObjects.entries()) {
+    for (const [key] of canvasObjects.entries()) {
       canvasObjects.delete(key);
     }
 
@@ -227,12 +226,20 @@ const Home = () => {
 
     switch (elem?.value) {
       // delete all the shapes from the canvas
-      case "reset":
+      case "reset": {
+        const confirmed = window.confirm(
+          "Clear the entire canvas? This cannot be undone."
+        );
+        if (!confirmed) {
+          setActiveElement(defaultNavElement);
+          break;
+        }
         deleteAllShapes();
         fabricRef.current?.clear();
         setActiveElement(defaultNavElement);
         toast.info("Canvas cleared");
         break;
+      }
 
       // delete the selected shape from the canvas
       case "delete":
@@ -451,13 +458,18 @@ const Home = () => {
         handleImageUpload={(e: React.ChangeEvent<HTMLInputElement>) => {
           e.stopPropagation();
 
+          const file = e.target.files?.[0];
+          if (!file) return;
+
           handleImageUpload({
-            file: e.target.files?.[0] as File,
+            file,
             canvas: fabricRef as React.MutableRefObject<fabric.Canvas>,
             shapeRef,
             syncShapeInStorage,
           });
           toast.success("Image added to canvas");
+          // Reset input so the same file can be re-uploaded
+          e.target.value = "";
         }}
         handleActiveElement={handleActiveElement}
       />
