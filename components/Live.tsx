@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { X } from "lucide-react";
 
 import { useBroadcastEvent, useEventListener, useMyPresence, useOthers } from "@/liveblocks.config";
 import useInterval from "@/hooks/useInterval";
@@ -31,7 +32,7 @@ const Live = ({ canvasRef, undo, redo }: Props) => {
    *
    * useMyPresence: https://liveblocks.io/docs/api-reference/liveblocks-react#useMyPresence
    */
-  const [{ cursor }, updateMyPresence] = useMyPresence() as any;
+  const [{ cursor }, updateMyPresence] = useMyPresence();
 
   /**
    * useBroadcastEvent is used to broadcast an event to all the other users in the room.
@@ -39,6 +40,8 @@ const Live = ({ canvasRef, undo, redo }: Props) => {
    * useBroadcastEvent: https://liveblocks.io/docs/api-reference/liveblocks-react#useBroadcastEvent
    */
   const broadcast = useBroadcastEvent();
+
+  const [zoom, setZoom] = useState(100);
 
   // store the reactions created on mouse click
   const [reactions, setReactions] = useState<Reaction[]>([]);
@@ -100,6 +103,16 @@ const Live = ({ canvasRef, undo, redo }: Props) => {
     );
   });
 
+  // Sync zoom level from the fabric canvas via custom events
+  useEffect(() => {
+    const onZoom = (e: Event) => {
+      const detail = (e as CustomEvent<{ zoom: number }>).detail;
+      setZoom(Math.round(detail.zoom * 100));
+    };
+    window.addEventListener("canvas:zoom", onZoom);
+    return () => window.removeEventListener("canvas:zoom", onZoom);
+  }, []);
+
   // Listen to keyboard events to change the cursor state
   useEffect(() => {
     const onKeyUp = (e: KeyboardEvent) => {
@@ -159,7 +172,7 @@ const Live = ({ canvasRef, undo, redo }: Props) => {
     });
     updateMyPresence({
       cursor: null,
-      message: null,
+      message: undefined,
     });
   }, []);
 
@@ -270,6 +283,14 @@ const Live = ({ canvasRef, undo, redo }: Props) => {
 
         {/* Show the comments */}
         <Comments />
+
+        {/* Zoom level indicator */}
+        <div className="absolute bottom-3 left-3 rounded bg-primary-grey-200 px-2 py-1 text-[11px] text-primary-grey-300 select-none pointer-events-none">
+          {zoom}%
+        </div>
+
+        {/* Shortcut hint button */}
+        <ShortcutHint />
       </ContextMenuTrigger>
 
       <ContextMenuContent className="right-menu-content">
@@ -285,6 +306,48 @@ const Live = ({ canvasRef, undo, redo }: Props) => {
         ))}
       </ContextMenuContent>
     </ContextMenu>
+  );
+};
+
+const ShortcutHint = () => {
+  const [open, setOpen] = useState(false);
+  const all = [
+    ...shortcuts,
+    { key: "5", name: "Select", shortcut: "Click" },
+    { key: "6", name: "Delete shape", shortcut: "Del / ⌫" },
+    { key: "7", name: "Copy", shortcut: "⌘ + C" },
+    { key: "8", name: "Paste", shortcut: "⌘ + V" },
+    { key: "9", name: "Cut", shortcut: "⌘ + X" },
+    { key: "10", name: "Zoom", shortcut: "Scroll" },
+  ];
+  return (
+    <>
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="absolute bottom-3 right-3 flex h-6 w-6 items-center justify-center rounded-full bg-primary-grey-200 text-[11px] font-bold text-primary-grey-300 hover:bg-primary-grey-300 hover:text-white"
+        title="Keyboard shortcuts"
+      >
+        ?
+      </button>
+      {open && (
+        <div className="absolute bottom-12 right-3 z-50 w-56 rounded-lg border border-primary-grey-200 bg-primary-black p-4 shadow-xl">
+          <div className="mb-3 flex items-center justify-between">
+            <span className="text-[11px] font-semibold uppercase text-primary-grey-300">Shortcuts</span>
+            <button onClick={() => setOpen(false)}>
+              <X className="h-3.5 w-3.5 text-primary-grey-300" />
+            </button>
+          </div>
+          <div className="flex flex-col gap-2">
+            {all.map((s) => (
+              <div key={s.key} className="flex items-center justify-between text-xs text-white">
+                <span>{s.name}</span>
+                <kbd className="rounded bg-primary-grey-200 px-1.5 py-0.5 text-[10px] text-primary-grey-300">{s.shortcut}</kbd>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 

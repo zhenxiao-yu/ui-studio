@@ -21,10 +21,6 @@ const nextConfig = {
       },
     ],
   },
-  typescript: {
-    // Ignore TypeScript build errors (use with caution)
-    ignoreBuildErrors: true,
-  },
 };
 
 export default nextConfig;

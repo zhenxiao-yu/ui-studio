@@ -129,8 +129,12 @@ export type ShapesMenuProps = {
   imageInputRef: any;
 };
 
-// Type representing the presence of users
-export type Presence = any;
+export type Presence = {
+  cursor: { x: number; y: number } | null;
+  cursorColor: string | null;
+  editingText: string | null;
+  message?: string;
+};
 
 // Props for the live cursor component
 export type LiveCursorProps = {

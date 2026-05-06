@@ -1,7 +1,8 @@
 "use client";
 
 import { fabric } from "fabric";
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 
 import { useMutation, useRedo, useStorage, useUndo } from "@/liveblocks.config";
 import {
@@ -20,6 +21,7 @@ import {
 } from "@/lib/canvas";
 import { handleDelete, handleKeyDown } from "@/lib/key-events";
 import { LeftSidebar, Live, Navbar, RightSidebar } from "@/components/index";
+import Onboarding from "@/components/Onboarding";
 import { handleImageUpload } from "@/lib/shapes";
 import { defaultNavElement } from "@/constants";
 import { ActiveElement, Attributes } from "@/types/type";
@@ -226,18 +228,16 @@ const Home = () => {
     switch (elem?.value) {
       // delete all the shapes from the canvas
       case "reset":
-        // clear the storage
         deleteAllShapes();
-        // clear the canvas
         fabricRef.current?.clear();
-        // set "select" as the active element
         setActiveElement(defaultNavElement);
+        toast.info("Canvas cleared");
         break;
 
       // delete the selected shape from the canvas
       case "delete":
         // delete it from the canvas
-        handleDelete(fabricRef.current as any, deleteShapeFromStorage);
+        handleDelete(fabricRef.current as fabric.Canvas, deleteShapeFromStorage);
         // set "select" as the active element
         setActiveElement(defaultNavElement);
         break;
@@ -418,68 +418,20 @@ const Home = () => {
       });
     });
 
-    /**
-     * listen to the resize event on the window which is fired when the
-     * user resizes the window.
-     *
-     * We're using this to resize the canvas when the user resizes the
-     * window.
-     */
-    window.addEventListener("resize", () => {
-      handleResize({
-        canvas: fabricRef.current,
-      });
-    });
+    const onResize = () => handleResize({ canvas: fabricRef.current });
+    const onKeyDown = (e: KeyboardEvent) =>
+      handleKeyDown({ e, canvas: fabricRef.current, undo, redo, syncShapeInStorage, deleteShapeFromStorage });
 
-    /**
-     * listen to the key down event on the window which is fired when the
-     * user presses a key on the keyboard.
-     *
-     * We're using this to perform some actions like delete, copy, paste, etc when the user presses the respective keys on the keyboard.
-     */
-    window.addEventListener("keydown", (e) =>
-      handleKeyDown({
-        e,
-        canvas: fabricRef.current,
-        undo,
-        redo,
-        syncShapeInStorage,
-        deleteShapeFromStorage,
-      })
-    );
+    window.addEventListener("resize", onResize);
+    window.addEventListener("keydown", onKeyDown);
 
-    // dispose the canvas and remove the event listeners when the component unmounts
     return () => {
-      /**
-       * dispose is a method provided by Fabric that allows you to dispose
-       * the canvas. It clears the canvas and removes all the event
-       * listeners
-       *
-       * dispose: http://fabricjs.com/docs/fabric.Canvas.html#dispose
-       */
       canvas.dispose();
-
-      // remove the event listeners
-      window.removeEventListener("resize", () => {
-        handleResize({
-          canvas: null,
-        });
-      });
-
-      window.removeEventListener("keydown", (e) =>
-        handleKeyDown({
-          e,
-          // eslint-disable-next-line react-hooks/exhaustive-deps
-          canvas: fabricRef.current,
-          undo,
-          redo,
-          syncShapeInStorage,
-          deleteShapeFromStorage,
-        })
-      );
+      window.removeEventListener("resize", onResize);
+      window.removeEventListener("keydown", onKeyDown);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [canvasRef]); // run this effect only once when the component mounts and the canvasRef changes
+  }, [canvasRef]);
 
   // render the canvas when the canvasObjects from live storage changes
   useEffect(() => {
@@ -491,26 +443,27 @@ const Home = () => {
   }, [canvasObjects]);
 
   return (
-    <main className='h-screen overflow-hidden'>
+    <main className='relative h-screen overflow-hidden'>
+      <Onboarding />
       <Navbar
         imageInputRef={imageInputRef}
         activeElement={activeElement}
-        handleImageUpload={(e: any) => {
-          // prevent the default behavior of the input element
+        handleImageUpload={(e: React.ChangeEvent<HTMLInputElement>) => {
           e.stopPropagation();
 
           handleImageUpload({
-            file: e.target.files[0],
-            canvas: fabricRef as any,
+            file: e.target.files?.[0] as File,
+            canvas: fabricRef as React.MutableRefObject<fabric.Canvas>,
             shapeRef,
             syncShapeInStorage,
           });
+          toast.success("Image added to canvas");
         }}
         handleActiveElement={handleActiveElement}
       />
 
       <section className='flex h-full flex-row'>
-        <LeftSidebar allShapes={Array.from(canvasObjects)} />
+        <LeftSidebar allShapes={Array.from(canvasObjects)} fabricRef={fabricRef} />
 
         <Live canvasRef={canvasRef} undo={undo} redo={redo} />
 

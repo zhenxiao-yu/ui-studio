@@ -35,7 +35,7 @@ const ActiveUsers = () => {
         {others.slice(0, 2).map(({ connectionId }) => (
           <Avatar
             key={connectionId}
-            name={generateRandomName()}
+            name={generateRandomName(connectionId)}
             otherStyles='-ml-3'
           />
         ))}

@@ -41,12 +41,20 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-// Function to generate a random name using a random adjective and animal
-export function generateRandomName(): string {
-  const randomAdjective =
-    adjectives[Math.floor(Math.random() * adjectives.length)];
-  const randomAnimal = animals[Math.floor(Math.random() * animals.length)];
+// Seeded random: deterministic from a numeric seed so names are stable per connectionId
+function seededRandom(seed: number): number {
+  const x = Math.sin(seed + 1) * 10000;
+  return x - Math.floor(x);
+}
 
+export function generateRandomName(seed?: number): string {
+  if (seed !== undefined) {
+    const adjIndex = Math.floor(seededRandom(seed) * adjectives.length);
+    const aniIndex = Math.floor(seededRandom(seed + 999) * animals.length);
+    return `${adjectives[adjIndex]} ${animals[aniIndex]}`;
+  }
+  const randomAdjective = adjectives[Math.floor(Math.random() * adjectives.length)];
+  const randomAnimal = animals[Math.floor(Math.random() * animals.length)];
   return `${randomAdjective} ${randomAnimal}`;
 }
 
@@ -94,6 +102,15 @@ export const getShapeInfo = (shapeType: string) => {
         name: shapeType,
       };
   }
+};
+
+export const exportToPng = () => {
+  const canvas = document.querySelector("canvas");
+  if (!canvas) return;
+  const link = document.createElement("a");
+  link.download = "canvas.png";
+  link.href = canvas.toDataURL("image/png");
+  link.click();
 };
 
 // Function to export the canvas content to a PDF file

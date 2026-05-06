@@ -1,14 +1,14 @@
 import { Work_Sans } from "next/font/google";
+import { Toaster } from "sonner";
 
 import "./globals.css";
 import { TooltipProvider } from "@/components/ui/tooltip";
-
-import Room from "./Room";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 export const metadata = {
   title: "ui studio",
   description:
-    "A minimalist and intuitive UI design web application inspired by Figma, designed to facilitate real-time collaboration and seamless design experiences. Built using Next.js 14, Fabric.js, and Liveblocks, ui-studio empowers designers to create, share, and collaborate on interactive design projects effortlessly.",
+    "A minimalist and intuitive UI design web application inspired by Figma, designed to facilitate real-time collaboration and seamless design experiences.",
 };
 
 const workSans = Work_Sans({
@@ -20,9 +20,10 @@ const workSans = Work_Sans({
 const RootLayout = ({ children }: { children: React.ReactNode }) => (
   <html lang='en'>
     <body className={`${workSans.className} bg-primary-grey-800`}>
-      <Room>
+      <ErrorBoundary>
         <TooltipProvider>{children}</TooltipProvider>
-      </Room>
+        <Toaster theme="dark" position="bottom-right" richColors />
+      </ErrorBoundary>
     </body>
   </html>
 );

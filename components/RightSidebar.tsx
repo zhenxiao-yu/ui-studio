@@ -1,7 +1,9 @@
 import React, { useMemo, useRef } from "react";
+import Image from "next/image";
 
 import { RightSidebarProps } from "@/types/type";
 import { bringElement, modifyShape } from "@/lib/shapes";
+import { directionOptions } from "@/constants";
 
 import Text from "./settings/Text";
 import Color from "./settings/Color";
@@ -71,6 +73,29 @@ const RightSidebar = ({
           attributeType='fill'
           handleInputChange={handleInputChange}
         />
+
+        <div className='flex flex-col gap-3 border-b border-primary-grey-200 px-5 py-3'>
+          <h3 className='text-[10px] uppercase'>Order</h3>
+          <div className='flex gap-2'>
+            {directionOptions.map((option) => (
+              <button
+                key={option.value}
+                title={option.label}
+                onClick={() =>
+                  bringElement({
+                    canvas: fabricRef.current as fabric.Canvas,
+                    direction: option.value,
+                    syncShapeInStorage,
+                  })
+                }
+                className='flex h-8 w-full items-center justify-center gap-1.5 rounded border border-primary-grey-200 text-[10px] hover:bg-primary-green hover:text-primary-black'
+              >
+                <Image src={option.icon} alt={option.label} width={14} height={14} />
+                <span>{option.label.replace("Bring to ", "").replace("Send to ", "")}</span>
+              </button>
+            ))}
+          </div>
+        </div>
 
         <Export />
       </section>

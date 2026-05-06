@@ -15,8 +15,7 @@ const CursorChat = ({ cursor, cursorState, setCursorState, updateMyPresence }: C
     if (e.key === "Enter") {
       setCursorState({
         mode: CursorMode.Chat,
-        // @ts-ignore
-        previousMessage: cursorState.message,
+        previousMessage: cursorState.mode === CursorMode.Chat ? cursorState.message : null,
         message: "",
       });
     } else if (e.key === "Escape") {

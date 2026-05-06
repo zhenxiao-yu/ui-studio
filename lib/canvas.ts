@@ -330,6 +330,8 @@ export const handleCanvasZoom = ({
 
   canvas.zoomToPoint({ x: options.e.offsetX, y: options.e.offsetY }, zoom);
 
+  window.dispatchEvent(new CustomEvent("canvas:zoom", { detail: { zoom } }));
+
   options.e.preventDefault();
   options.e.stopPropagation();
 };
