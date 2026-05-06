@@ -94,6 +94,7 @@ class NormalizeReadlinkEisdirPlugin {
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   webpack: (config) => {
+    config.cache = false;
     config.resolve.symlinks = false;
     config.snapshot = {
       ...config.snapshot,

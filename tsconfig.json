@@ -15,22 +15,21 @@
     "forceConsistentCasingInFileNames": true,
     "plugins": [
       {
-        "name": "next"
-      }
+        "name": "next",
+      },
     ],
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./*"],
     },
     "target": "es2018",
-    "typeRoots": ["./types"]
+    "typeRoots": ["./types"],
   },
   "include": [
     "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx",
+    "./types/**/*.d.ts",
     ".next/types/**/*.ts",
-    ".next/types/**/*.tsx",
-    "./types/**/*.d.ts"
   ],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules"],
 }

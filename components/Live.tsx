@@ -3,14 +3,29 @@
 import { useCallback, useEffect, useState } from "react";
 import { X } from "lucide-react";
 
-import { useBroadcastEvent, useEventListener, useMyPresence, useOthers } from "@/liveblocks.config";
+import {
+  useBroadcastEvent,
+  useEventListener,
+  useMyPresence,
+  useOthers,
+} from "@/liveblocks.config";
 import useInterval from "@/hooks/useInterval";
 import { CursorMode, CursorState, Reaction, ReactionEvent } from "@/types/type";
 import { shortcuts } from "@/constants";
 
 import { Comments } from "./comments/Comments";
-import { CursorChat, FlyingReaction, LiveCursors, ReactionSelector } from "./index";
-import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from "./ui/context-menu";
+import {
+  CursorChat,
+  FlyingReaction,
+  LiveCursors,
+  ReactionSelector,
+} from "./index";
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+} from "./ui/context-menu";
 
 type Props = {
   canvasRef: React.MutableRefObject<HTMLCanvasElement | null>;
@@ -58,12 +73,18 @@ const Live = ({ canvasRef, undo, redo }: Props) => {
 
   // Remove reactions that are not visible anymore (every 1 sec)
   useInterval(() => {
-    setReactions((reactions) => reactions.filter((reaction) => reaction.timestamp > Date.now() - 4000));
+    setReactions((reactions) =>
+      reactions.filter((reaction) => reaction.timestamp > Date.now() - 4000)
+    );
   }, 1000);
 
   // Broadcast the reaction to other users (every 100ms)
   useInterval(() => {
-    if (cursorState.mode === CursorMode.Reaction && cursorState.isPressed && cursor) {
+    if (
+      cursorState.mode === CursorMode.Reaction &&
+      cursorState.isPressed &&
+      cursor
+    ) {
       // concat all the reactions created on mouse click
       setReactions((reactions) =>
         reactions.concat([
@@ -146,24 +167,24 @@ const Live = ({ canvasRef, undo, redo }: Props) => {
   }, [updateMyPresence]);
 
   // Listen to mouse events to change the cursor state
-  const handlePointerMove = useCallback((event: React.PointerEvent) => {
-    event.preventDefault();
+  const handlePointerMove = useCallback(
+    (event: React.PointerEvent) => {
+      event.preventDefault();
 
-    // if cursor is not in reaction selector mode, update the cursor position
-    if (cursor == null || cursorState.mode !== CursorMode.ReactionSelector) {
-      // get the cursor position in the canvas
-      const x = event.clientX - event.currentTarget.getBoundingClientRect().x;
-      const y = event.clientY - event.currentTarget.getBoundingClientRect().y;
+      if (cursor == null || cursorState.mode !== CursorMode.ReactionSelector) {
+        const x = event.clientX - event.currentTarget.getBoundingClientRect().x;
+        const y = event.clientY - event.currentTarget.getBoundingClientRect().y;
 
-      // broadcast the cursor position to other users
-      updateMyPresence({
-        cursor: {
-          x,
-          y,
-        },
-      });
-    }
-  }, []);
+        updateMyPresence({
+          cursor: {
+            x,
+            y,
+          },
+        });
+      }
+    },
+    [cursor, cursorState.mode, updateMyPresence]
+  );
 
   // Hide the cursor when the mouse leaves the canvas
   const handlePointerLeave = useCallback(() => {
@@ -174,7 +195,7 @@ const Live = ({ canvasRef, undo, redo }: Props) => {
       cursor: null,
       message: undefined,
     });
-  }, []);
+  }, [updateMyPresence]);
 
   // Show the cursor when the mouse enters the canvas
   const handlePointerDown = useCallback(
@@ -192,52 +213,59 @@ const Live = ({ canvasRef, undo, redo }: Props) => {
 
       // if cursor is in reaction mode, set isPressed to true
       setCursorState((state: CursorState) =>
-        cursorState.mode === CursorMode.Reaction ? { ...state, isPressed: true } : state
+        cursorState.mode === CursorMode.Reaction
+          ? { ...state, isPressed: true }
+          : state
       );
     },
-    [cursorState.mode, setCursorState]
+    [cursorState.mode, updateMyPresence]
   );
 
   // hide the cursor when the mouse is up
   const handlePointerUp = useCallback(() => {
     setCursorState((state: CursorState) =>
-      cursorState.mode === CursorMode.Reaction ? { ...state, isPressed: false } : state
+      cursorState.mode === CursorMode.Reaction
+        ? { ...state, isPressed: false }
+        : state
     );
   }, [cursorState.mode, setCursorState]);
 
   // trigger respective actions when the user clicks on the right menu
-  const handleContextMenuClick = useCallback((key: string) => {
-    switch (key) {
-      case "Chat":
-        setCursorState({
-          mode: CursorMode.Chat,
-          previousMessage: null,
-          message: "",
-        });
-        break;
+  const handleContextMenuClick = useCallback(
+    (key: string) => {
+      switch (key) {
+        case "Chat":
+          setCursorState({
+            mode: CursorMode.Chat,
+            previousMessage: null,
+            message: "",
+          });
+          break;
 
-      case "Reactions":
-        setCursorState({ mode: CursorMode.ReactionSelector });
-        break;
+        case "Reactions":
+          setCursorState({ mode: CursorMode.ReactionSelector });
+          break;
 
-      case "Undo":
-        undo();
-        break;
+        case "Undo":
+          undo();
+          break;
 
-      case "Redo":
-        redo();
-        break;
+        case "Redo":
+          redo();
+          break;
 
-      default:
-        break;
-    }
-  }, []);
+        default:
+          break;
+      }
+    },
+    [redo, undo]
+  );
 
   return (
     <ContextMenu>
       <ContextMenuTrigger
-        className="relative flex h-full w-full flex-1 items-center justify-center"
-        id="canvas"
+        className='relative flex h-full w-full flex-1 items-center justify-center'
+        id='canvas'
         style={{
           cursor: cursorState.mode === CursorMode.Chat ? "none" : "auto",
         }}
@@ -285,7 +313,7 @@ const Live = ({ canvasRef, undo, redo }: Props) => {
         <Comments />
 
         {/* Zoom level indicator */}
-        <div className="absolute bottom-3 left-3 rounded bg-primary-grey-200 px-2 py-1 text-[11px] text-primary-grey-300 select-none pointer-events-none">
+        <div className='pointer-events-none absolute bottom-3 left-3 select-none rounded bg-primary-grey-200 px-2 py-1 text-[11px] text-primary-grey-300'>
           {zoom}%
         </div>
 
@@ -293,15 +321,15 @@ const Live = ({ canvasRef, undo, redo }: Props) => {
         <ShortcutHint />
       </ContextMenuTrigger>
 
-      <ContextMenuContent className="right-menu-content">
+      <ContextMenuContent className='right-menu-content'>
         {shortcuts.map((item) => (
           <ContextMenuItem
             key={item.key}
-            className="right-menu-item"
+            className='right-menu-item'
             onClick={() => handleContextMenuClick(item.name)}
           >
             <p>{item.name}</p>
-            <p className="text-xs text-primary-grey-300">{item.shortcut}</p>
+            <p className='text-xs text-primary-grey-300'>{item.shortcut}</p>
           </ContextMenuItem>
         ))}
       </ContextMenuContent>
@@ -324,24 +352,31 @@ const ShortcutHint = () => {
     <>
       <button
         onClick={() => setOpen((v) => !v)}
-        className="absolute bottom-3 right-3 flex h-6 w-6 items-center justify-center rounded-full bg-primary-grey-200 text-[11px] font-bold text-primary-grey-300 hover:bg-primary-grey-300 hover:text-white"
-        title="Keyboard shortcuts"
+        className='absolute bottom-3 right-3 flex h-6 w-6 items-center justify-center rounded-full bg-primary-grey-200 text-[11px] font-bold text-primary-grey-300 hover:bg-primary-grey-300 hover:text-white'
+        title='Keyboard shortcuts'
       >
         ?
       </button>
       {open && (
-        <div className="absolute bottom-12 right-3 z-50 w-56 rounded-lg border border-primary-grey-200 bg-primary-black p-4 shadow-xl">
-          <div className="mb-3 flex items-center justify-between">
-            <span className="text-[11px] font-semibold uppercase text-primary-grey-300">Shortcuts</span>
+        <div className='absolute bottom-12 right-3 z-50 w-56 rounded-lg border border-primary-grey-200 bg-primary-black p-4 shadow-xl'>
+          <div className='mb-3 flex items-center justify-between'>
+            <span className='text-[11px] font-semibold uppercase text-primary-grey-300'>
+              Shortcuts
+            </span>
             <button onClick={() => setOpen(false)}>
-              <X className="h-3.5 w-3.5 text-primary-grey-300" />
+              <X className='h-3.5 w-3.5 text-primary-grey-300' />
             </button>
           </div>
-          <div className="flex flex-col gap-2">
+          <div className='flex flex-col gap-2'>
             {all.map((s) => (
-              <div key={s.key} className="flex items-center justify-between text-xs text-white">
+              <div
+                key={s.key}
+                className='flex items-center justify-between text-xs text-white'
+              >
                 <span>{s.name}</span>
-                <kbd className="rounded bg-primary-grey-200 px-1.5 py-0.5 text-[10px] text-primary-grey-300">{s.shortcut}</kbd>
+                <kbd className='rounded bg-primary-grey-200 px-1.5 py-0.5 text-[10px] text-primary-grey-300'>
+                  {s.shortcut}
+                </kbd>
               </div>
             ))}
           </div>
