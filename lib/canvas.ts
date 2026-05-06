@@ -13,6 +13,35 @@ import {
 import { defaultNavElement } from "@/constants";
 import { createSpecificShape } from "./shapes";
 
+type StoredCanvasObject = Record<string, unknown> & { objectId?: string };
+type FabricObjectWithId = fabric.Object & { objectId?: string };
+
+const VISUAL_STATE_FIELDS = [
+  "left",
+  "top",
+  "width",
+  "height",
+  "scaleX",
+  "scaleY",
+  "angle",
+  "fill",
+  "stroke",
+  "strokeWidth",
+  "opacity",
+  "radius",
+  "rx",
+  "ry",
+  "x1",
+  "y1",
+  "x2",
+  "y2",
+  "text",
+  "fontSize",
+  "fontFamily",
+  "fontWeight",
+  "src",
+] as const;
+
 // Initialize the fabric canvas
 export const initializeFabric = ({
   fabricRef,
@@ -146,7 +175,9 @@ export const handleCanvasMouseUp = ({
   isDrawing.current = false;
   if (selectedShapeRef.current === "freeform") return;
 
-  syncShapeInStorage(shapeRef.current);
+  if (shapeRef.current?.objectId) {
+    syncShapeInStorage(shapeRef.current);
+  }
 
   shapeRef.current = null;
   activeObjectRef.current = null;
@@ -275,35 +306,143 @@ export const handleCanvasObjectScaling = ({
   }));
 };
 
-// Render canvas objects from storage onto the canvas
+// Returns true when the canvas object's visual state differs from storage data.
+// Uses a tolerance of 0.01 for floats (avoids false positives from serialization rounding).
+const shapeChanged = (
+  existing: fabric.Object,
+  storageData: StoredCanvasObject
+) => {
+  const e = existing.toObject() as Record<string, unknown>;
+
+  for (const field of VISUAL_STATE_FIELDS) {
+    const a = e[field];
+    const b = storageData[field];
+
+    if (typeof a === "number" && typeof b === "number") {
+      if (Math.abs(a - b) > 0.01) return true;
+    } else if (a !== b) {
+      return true;
+    }
+  }
+  // Freeform path data is an array, so compare it by value.
+  if (JSON.stringify(e.path) !== JSON.stringify(storageData.path)) return true;
+  return false;
+};
+
+const addEnlivenedObject = ({
+  canvas,
+  objectId,
+  objectData,
+  setActive,
+  onAdded,
+}: {
+  canvas: fabric.Canvas;
+  objectId: string;
+  objectData: StoredCanvasObject;
+  setActive: boolean;
+  onAdded: () => void;
+}) => {
+  fabric.util.enlivenObjects(
+    [objectData],
+    (enlivenedObjects: fabric.Object[]) => {
+      enlivenedObjects.forEach((enlivenedObj) => {
+        (enlivenedObj as FabricObjectWithId).objectId = objectId;
+        canvas.add(enlivenedObj);
+
+        if (setActive) {
+          canvas.setActiveObject(enlivenedObj);
+        }
+      });
+
+      onAdded();
+    },
+    "fabric"
+  );
+};
+
+const syncCanvasObjectOrder = (
+  canvas: fabric.Canvas,
+  canvasObjects: ReadonlyMap<string, StoredCanvasObject>
+) => {
+  Array.from(canvasObjects.keys()).forEach((objectId, index) => {
+    const object = canvas
+      .getObjects()
+      .find((obj) => (obj as FabricObjectWithId).objectId === objectId);
+
+    if (object) {
+      canvas.moveTo(object, index);
+    }
+  });
+};
+
+// Render canvas objects from storage using object-level diffing:
+//   New objects (in storage, not on canvas): enliven + add
+//   Deleted objects (on canvas, not in storage): remove
+//   Changed objects: replace unless actively selected
+//   Unchanged objects: leave as-is to avoid flicker
 export const renderCanvas = ({
   fabricRef,
   canvasObjects,
   activeObjectRef,
 }: RenderCanvas) => {
-  // Guard: storage may be null/undefined during initial load
   if (!canvasObjects || !fabricRef.current) return;
+  const canvas = fabricRef.current;
+  const storedObjects = canvasObjects as ReadonlyMap<
+    string,
+    StoredCanvasObject
+  >;
 
-  fabricRef.current.clear();
-
-  Array.from(canvasObjects, ([objectId, objectData]) => {
-    if (!objectData) return;
-
-    fabric.util.enlivenObjects(
-      [objectData],
-      (enlivenedObjects: fabric.Object[]) => {
-        enlivenedObjects.forEach((enlivenedObj) => {
-          if (!fabricRef.current) return;
-          if ((activeObjectRef.current as any)?.objectId === objectId) {
-            fabricRef.current.setActiveObject(enlivenedObj);
-          }
-          fabricRef.current.add(enlivenedObj);
-        });
-        fabricRef.current?.renderAll();
-      },
-      "fabric"
-    );
+  // Index all objects currently on the canvas by their objectId
+  const existingById = new Map<string, fabric.Object>();
+  canvas.getObjects().forEach((obj) => {
+    const id = (obj as FabricObjectWithId).objectId;
+    if (id) existingById.set(id, obj);
   });
+
+  const storageIds = new Set(storedObjects.keys());
+  const activeId = (activeObjectRef.current as FabricObjectWithId | null)
+    ?.objectId;
+
+  // Remove objects deleted from storage
+  for (const [id, obj] of existingById) {
+    if (!storageIds.has(id)) canvas.remove(obj);
+  }
+
+  // Add new objects; replace changed objects (skip actively selected)
+  for (const [objectId, objectData] of storedObjects) {
+    if (!objectData) continue;
+    const existing = existingById.get(objectId);
+
+    if (!existing) {
+      addEnlivenedObject({
+        canvas,
+        objectId,
+        objectData,
+        setActive: activeId === objectId,
+        onAdded: () => {
+          syncCanvasObjectOrder(canvas, storedObjects);
+          canvas.requestRenderAll();
+        },
+      });
+    } else if (activeId !== objectId && shapeChanged(existing, objectData)) {
+      // Changed and not actively manipulated: replace.
+      canvas.remove(existing);
+      addEnlivenedObject({
+        canvas,
+        objectId,
+        objectData,
+        setActive: false,
+        onAdded: () => {
+          syncCanvasObjectOrder(canvas, storedObjects);
+          canvas.requestRenderAll();
+        },
+      });
+    }
+    // else: unchanged or actively selected, so leave as-is.
+  }
+
+  syncCanvasObjectOrder(canvas, storedObjects);
+  canvas.requestRenderAll();
 };
 
 // Adjust canvas size when the window is resized

@@ -32,6 +32,8 @@ type UseFabricCanvasParams = {
   canvasObjects: ReadonlyMap<string, any> | null;
 };
 
+const CANVAS_SYNC_THROTTLE_MS = 50;
+
 export const useFabricCanvas = ({
   syncShapeInStorage,
   deleteShapeFromStorage,
@@ -86,7 +88,10 @@ export const useFabricCanvas = ({
       }
 
       case "delete":
-        handleDelete(fabricRef.current as fabric.Canvas, deleteShapeFromStorage);
+        handleDelete(
+          fabricRef.current as fabric.Canvas,
+          deleteShapeFromStorage
+        );
         setActiveElement(defaultNavElement);
         break;
 
@@ -125,15 +130,47 @@ export const useFabricCanvas = ({
     const canvas = initializeFabric({ canvasRef, fabricRef });
 
     canvas.on("mouse:down", (options) =>
-      handleCanvasMouseDown({ options, canvas, selectedShapeRef, isDrawing, shapeRef })
+      handleCanvasMouseDown({
+        options,
+        canvas,
+        selectedShapeRef,
+        isDrawing,
+        shapeRef,
+      })
     );
 
-    canvas.on("mouse:move", (options) =>
-      handleCanvasMouseMove({ options, canvas, isDrawing, selectedShapeRef, shapeRef, syncShapeInStorage })
-    );
+    // Keep in-progress shape creation responsive without flooding Liveblocks.
+    const mouseMoveThrottle = { last: 0 };
+    canvas.on("mouse:move", (options) => {
+      const now = Date.now();
+      const throttledSync =
+        now - mouseMoveThrottle.last >= CANVAS_SYNC_THROTTLE_MS
+          ? (obj: fabric.Object) => {
+              mouseMoveThrottle.last = now;
+              syncShapeInStorage(obj as CustomFabricObject<fabric.Object>);
+            }
+          : () => {};
+
+      handleCanvasMouseMove({
+        options,
+        canvas,
+        isDrawing,
+        selectedShapeRef,
+        shapeRef,
+        syncShapeInStorage: throttledSync,
+      });
+    });
 
     canvas.on("mouse:up", () =>
-      handleCanvasMouseUp({ canvas, isDrawing, shapeRef, activeObjectRef, selectedShapeRef, syncShapeInStorage, setActiveElement })
+      handleCanvasMouseUp({
+        canvas,
+        isDrawing,
+        shapeRef,
+        activeObjectRef,
+        selectedShapeRef,
+        syncShapeInStorage,
+        setActiveElement,
+      })
     );
 
     canvas.on("path:created", (options) =>
@@ -149,7 +186,11 @@ export const useFabricCanvas = ({
     );
 
     canvas.on("selection:created", (options) =>
-      handleCanvasSelectionCreated({ options, isEditingRef, setElementAttributes })
+      handleCanvasSelectionCreated({
+        options,
+        isEditingRef,
+        setElementAttributes,
+      })
     );
 
     canvas.on("object:scaling", (options) =>
@@ -162,7 +203,14 @@ export const useFabricCanvas = ({
 
     const onResize = () => handleResize({ canvas: fabricRef.current });
     const onKeyDown = (e: KeyboardEvent) =>
-      handleKeyDown({ e, canvas: fabricRef.current, undo, redo, syncShapeInStorage, deleteShapeFromStorage });
+      handleKeyDown({
+        e,
+        canvas: fabricRef.current,
+        undo,
+        redo,
+        syncShapeInStorage,
+        deleteShapeFromStorage,
+      });
 
     window.addEventListener("resize", onResize);
     window.addEventListener("keydown", onKeyDown);
@@ -172,7 +220,7 @@ export const useFabricCanvas = ({
       window.removeEventListener("resize", onResize);
       window.removeEventListener("keydown", onKeyDown);
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [canvasRef]);
 
   useEffect(() => {
