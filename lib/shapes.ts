@@ -137,6 +137,16 @@ export const createShape = (
   return createSpecificShape(shapeType, pointer);
 };
 
+// Properties stored numerically on the fabric object (string-typed in the inspector).
+const NUMERIC_PROPERTIES = new Set([
+  "left",
+  "top",
+  "angle",
+  "strokeWidth",
+  "fontSize",
+  "fontWeight",
+]);
+
 export const modifyShape = ({
   canvas,
   property,
@@ -148,21 +158,37 @@ export const modifyShape = ({
 
   if (!selectedElement || selectedElement?.type === "activeSelection") return;
 
-  // if  property is width or height, set the scale of the selected element
   if (property === "width") {
     selectedElement.set("scaleX", 1);
-    selectedElement.set("width", value);  
+    selectedElement.set("width", Number(value));
   } else if (property === "height") {
     selectedElement.set("scaleY", 1);
-    selectedElement.set("height", value);
+    selectedElement.set("height", Number(value));
+  } else if (property === "opacity") {
+    // Inspector value is 0–100; fabric expects 0–1.
+    const pct = Number(value);
+    if (Number.isFinite(pct)) {
+      selectedElement.set("opacity", Math.min(1, Math.max(0, pct / 100)));
+    }
+  } else if (property === "cornerRadius") {
+    const r = Number(value);
+    if (Number.isFinite(r) && (selectedElement as any).type === "rect") {
+      (selectedElement as any).set("rx", r);
+      (selectedElement as any).set("ry", r);
+    }
+  } else if (NUMERIC_PROPERTIES.has(property)) {
+    const num = Number(value);
+    if (Number.isFinite(num)) {
+      selectedElement.set(property as keyof object, num as any);
+    }
   } else {
     if (selectedElement[property as keyof object] === value) return;
     selectedElement.set(property as keyof object, value);
   }
 
-  // set selectedElement to activeObjectRef
+  selectedElement.setCoords();
+  canvas.requestRenderAll();
   activeObjectRef.current = selectedElement;
-
   syncShapeInStorage(selectedElement);
 };
 

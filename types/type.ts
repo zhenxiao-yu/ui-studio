@@ -54,6 +54,12 @@ export type ShapeData = {
 export type Attributes = {
   width: string;
   height: string;
+  left: string;
+  top: string;
+  angle: string;
+  opacity: string;
+  strokeWidth: string;
+  cornerRadius: string;
   fontSize: string;
   fontFamily: string;
   fontWeight: string;
@@ -99,6 +105,14 @@ export type ImageUpload = {
 };
 
 // Props for the right sidebar component
+export type AlignAxis =
+  | "left"
+  | "horizontalCenter"
+  | "right"
+  | "top"
+  | "verticalCenter"
+  | "bottom";
+
 export type RightSidebarProps = {
   elementAttributes: Attributes;
   setElementAttributes: React.Dispatch<React.SetStateAction<Attributes>>;
@@ -107,6 +121,11 @@ export type RightSidebarProps = {
   activeObjectId: string | null;
   isEditingRef: React.MutableRefObject<boolean>;
   syncShapeInStorage: (obj: any) => void;
+  brushSize: number;
+  setBrushSize: (size: number) => void;
+  duplicateActive: () => void;
+  alignSelected: (axis: AlignAxis) => void;
+  activeTool: string | null;
 };
 
 // Props for the navbar component

@@ -1,14 +1,20 @@
 import { Label } from "../ui/label";
 import { Input } from "../ui/input";
 
-const dimensionsOptions = [
+const fields = [
+  { label: "X", property: "left" },
+  { label: "Y", property: "top" },
   { label: "W", property: "width" },
   { label: "H", property: "height" },
-];
+  { label: "°", property: "angle" },
+] as const;
 
 type Props = {
   width: string;
   height: string;
+  left: string;
+  top: string;
+  angle: string;
   isEditingRef: React.MutableRefObject<boolean>;
   handleInputChange: (property: string, value: string) => void;
 };
@@ -16,35 +22,50 @@ type Props = {
 const Dimensions = ({
   width,
   height,
+  left,
+  top,
+  angle,
   isEditingRef,
   handleInputChange,
-}: Props) => (
-  <section className='flex flex-col rounded-md border-b border-primary-grey-200 shadow-sm'>
-    <div className='flex flex-col gap-4 p-4'>
-      {dimensionsOptions.map((item) => (
-        <div key={item.label} className='flex items-center gap-3'>
-          <Label
-            htmlFor={item.property}
-            className='text-xs font-bold text-gray-100'
-          >
-            {item.label}
-          </Label>
-          <Input
-            type='number'
-            id={item.property}
-            placeholder='100'
-            value={item.property === "width" ? width : height}
-            className='w-full rounded-md border border-primary-grey-300 px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-primary-green'
-            min={10}
-            onChange={(e) => handleInputChange(item.property, e.target.value)}
-            onBlur={() => {
-              isEditingRef.current = false;
-            }}
-          />
-        </div>
-      ))}
-    </div>
-  </section>
-);
+}: Props) => {
+  const valueFor = (prop: string) =>
+    prop === "width"
+      ? width
+      : prop === "height"
+        ? height
+        : prop === "left"
+          ? left
+          : prop === "top"
+            ? top
+            : angle;
+
+  return (
+    <section className="border-b border-primary-grey-200">
+      <div className="grid grid-cols-2 gap-2 px-4 py-3">
+        {fields.map((item) => (
+          <div key={item.label} className="flex items-center gap-2">
+            <Label
+              htmlFor={item.property}
+              className="w-3 text-[11px] font-bold text-primary-grey-300"
+            >
+              {item.label}
+            </Label>
+            <Input
+              type="number"
+              id={item.property}
+              placeholder="0"
+              value={valueFor(item.property)}
+              className="w-full rounded border border-primary-grey-200 bg-primary-black px-2 py-1 text-xs text-white focus:outline-none focus:ring-1 focus:ring-primary-green"
+              onChange={(e) => handleInputChange(item.property, e.target.value)}
+              onBlur={() => {
+                isEditingRef.current = false;
+              }}
+            />
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+};
 
 export default Dimensions;

@@ -272,14 +272,24 @@ export const handleCanvasSelectionCreated = ({
       ? selectedElement?.height! * selectedElement?.scaleY
       : selectedElement?.height;
 
+    const opacityPct = Math.round(((selectedElement.opacity ?? 1) as number) * 100);
+    const rx = (selectedElement as any)?.rx;
+    const cornerRadius = typeof rx === "number" ? rx.toFixed(0) : "";
+
     setElementAttributes({
       width: scaledWidth?.toFixed(0).toString() || "",
       height: scaledHeight?.toFixed(0).toString() || "",
+      left: selectedElement.left?.toFixed(0) ?? "",
+      top: selectedElement.top?.toFixed(0) ?? "",
+      angle: ((selectedElement.angle ?? 0) as number).toFixed(0),
+      opacity: opacityPct.toString(),
+      strokeWidth: (selectedElement.strokeWidth ?? 0).toString(),
+      cornerRadius,
       fill: selectedElement?.fill?.toString() || "",
       stroke: selectedElement?.stroke || "",
-      fontSize: (selectedElement as any)?.fontSize || "",
+      fontSize: (selectedElement as any)?.fontSize?.toString() || "",
       fontFamily: (selectedElement as any)?.fontFamily || "",
-      fontWeight: (selectedElement as any)?.fontWeight || "",
+      fontWeight: (selectedElement as any)?.fontWeight?.toString() || "",
     });
   }
 };
@@ -303,6 +313,8 @@ export const handleCanvasObjectScaling = ({
     ...prev,
     width: scaledWidth?.toFixed(0).toString() || "",
     height: scaledHeight?.toFixed(0).toString() || "",
+    left: selectedElement?.left?.toFixed(0) ?? prev.left,
+    top: selectedElement?.top?.toFixed(0) ?? prev.top,
   }));
 };
 

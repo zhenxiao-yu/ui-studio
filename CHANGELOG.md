@@ -16,7 +16,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 - `fitCanvasToScreen` helper and `zoomIn` / `zoomOut` / `resetZoom` actions in `lib/canvas.ts`.
 - Status bar overlay on the canvas showing object count and connection state.
 - Selection highlight in the layer panel synced with canvas-side selection.
-- No-selection placeholder in the right inspector with grouped sections (Position & Size, Fill & Stroke, Text, Arrange, Export); Text section only renders for text objects.
+- No-selection placeholder in the right inspector with grouped sections; Text section only renders for text objects.
+- Object inspector power-ups: opacity slider, stroke width, corner radius (rectangles), and X/Y/angle inputs.
+- Color palette presets (12 swatches incl. transparent) and screen eyedropper (HTML5 EyeDropper API).
+- Multi-select alignment buttons (left / horizontal-center / right / top / vertical-center / bottom).
+- Duplicate object via inspector button or `Cmd/Ctrl + D`.
+- Tool keyboard shortcuts: `V` Select, `R` Rectangle, `O` Circle, `L` Line, `T` Text, `P` Pen.
+- Pan mode: hold `Space` and drag to pan the canvas.
+- Brush size slider in the inspector (1–60px) when the freeform pen tool is active.
+- JSON board import/export (replaces current board with an `{ version, exportedAt, objects }` payload).
 
 ### Changed
 - `.gitignore` updated for 2026 local AI tooling and collaboration-friendly repo hygiene.
@@ -25,6 +33,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 - Editor body extracted into `components/Editor.tsx`; `app/App.tsx` is now a thin mobile/desktop branch.
 - Navbar layout polished with board name, status text, region dividers, and aria-labels on icon buttons.
 - `selection:cleared` and `selection:updated` Fabric events now wired so the inspector reliably reflects the active object.
+- `modifyShape` handles numeric coercion and applies opacity (0–100% UI mapped to 0–1 canvas) plus rectangle corner radius (`rx` / `ry`).
+- Inspector `Dimensions` reorganized into a 2×2 grid of X / Y / W / H plus a rotation field.
 
 ## [0.2.0] - 2026-05-05
 

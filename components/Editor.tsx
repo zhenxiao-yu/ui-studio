@@ -29,6 +29,10 @@ const Editor = () => {
     activeObjectRef,
     activeObjectId,
     handleImageUploadChange,
+    brushSize,
+    setBrushSize,
+    duplicateActive,
+    alignSelected,
   } = useFabricCanvas({
     syncShapeInStorage,
     deleteShapeFromStorage,
@@ -70,6 +74,11 @@ const Editor = () => {
           activeObjectRef={activeObjectRef}
           activeObjectId={activeObjectId}
           syncShapeInStorage={syncShapeInStorage}
+          brushSize={brushSize}
+          setBrushSize={setBrushSize}
+          duplicateActive={duplicateActive}
+          alignSelected={alignSelected}
+          activeTool={activeElement?.value ?? null}
         />
       </section>
     </main>
