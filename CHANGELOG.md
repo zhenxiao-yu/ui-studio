@@ -36,6 +36,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 - `modifyShape` handles numeric coercion and applies opacity (0–100% UI mapped to 0–1 canvas) plus rectangle corner radius (`rx` / `ry`).
 - Inspector `Dimensions` reorganized into a 2×2 grid of X / Y / W / H plus a rotation field.
 
+### Fixed
+- Tooltips now use a fixed dark surface (`bg-primary-black`, white text, grey border) so they remain readable against any canvas color, including white or photographic backgrounds.
+- Cursor chat bubble redesigned with the editor's dark theme — solid bubble, kbd hints for ↵ and Esc, no more `bg-blue-500` clash.
+- Reaction selector restyled into a floating dark pill matching the zoom controls and status bar.
+- Shortcut-hint button and shortcut panel restyled to match the floating control system; close button now has hover affordance.
+- Mobile viewer "Fit to screen" button matches the rest of the floating controls.
+- `/` and `e` shortcuts no longer hijack focus when typing in inspector form fields.
+
 ## [0.2.0] - 2026-05-05
 
 ### Added

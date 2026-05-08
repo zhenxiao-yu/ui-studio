@@ -220,8 +220,9 @@ const MobileViewer = () => {
       >
         <canvas ref={canvasRef} />
         <button
+          type="button"
           onClick={handleFit}
-          className="absolute bottom-3 right-3 rounded-full bg-primary-grey-200 px-3 py-1.5 text-xs text-white shadow-lg hover:bg-primary-grey-300"
+          className="absolute bottom-3 right-3 rounded-full border border-primary-grey-200 bg-primary-black/80 px-3 py-1.5 text-xs text-white shadow-lg backdrop-blur hover:bg-primary-grey-200"
         >
           Fit to screen
         </button>

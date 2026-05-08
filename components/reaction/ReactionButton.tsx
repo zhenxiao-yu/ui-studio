@@ -1,38 +1,40 @@
 import React from "react";
 
-// Props type for ReactionSelector component
+const REACTIONS = ["👍", "🔥", "😍", "👀", "😱", "🙁"];
+
 type Props = {
   setReaction: (reaction: string) => void;
 };
 
-// ReactionSelector component for displaying reaction buttons
 const ReactionSelector = ({ setReaction }: Props) => (
   <div
-    className='absolute bottom-20 left-0 right-0 mx-auto w-fit transform rounded-full bg-white px-2 shadow-lg'
-    onPointerMove={(e) => e.stopPropagation()} // Prevent pointer events from propagating
+    className="absolute bottom-20 left-1/2 z-30 flex -translate-x-1/2 items-center gap-1 rounded-full border border-primary-grey-200 bg-primary-black/90 px-2 py-1.5 shadow-xl backdrop-blur"
+    onPointerMove={(e) => e.stopPropagation()}
   >
-    {["👍", "🔥", "😍", "👀", "😱", "🙁"].map((reaction) => (
+    {REACTIONS.map((reaction) => (
       <ReactionButton
         key={reaction}
         reaction={reaction}
         onSelect={setReaction}
       />
     ))}
+    <span className="ml-1 hidden border-l border-primary-grey-200 pl-2 text-[10px] text-primary-grey-300 sm:inline">
+      Click + drag to spray
+    </span>
   </div>
 );
 
-// Props type for ReactionButton component
 type ReactionButtonProps = {
   reaction: string;
   onSelect: (reaction: string) => void;
 };
 
-// ReactionButton component for individual reaction buttons
 const ReactionButton = ({ reaction, onSelect }: ReactionButtonProps) => (
   <button
-    className='transform select-none p-2 text-xl transition-transform hover:scale-150 focus:scale-150 focus:outline-none'
-    onPointerDown={() => onSelect(reaction)} // Set the selected reaction on pointer down
-    aria-label={`Select reaction ${reaction}`} // Accessible label for screen readers
+    type="button"
+    className="rounded-full p-1.5 text-lg transition-transform hover:scale-125 hover:bg-primary-grey-200 focus:scale-125 focus:outline-none focus:ring-1 focus:ring-primary-green"
+    onPointerDown={() => onSelect(reaction)}
+    aria-label={`Select reaction ${reaction}`}
   >
     {reaction}
   </button>

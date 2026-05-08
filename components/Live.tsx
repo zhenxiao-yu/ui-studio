@@ -142,9 +142,18 @@ const Live = ({ canvasRef, fabricRef, undo, redo }: Props) => {
     return () => window.removeEventListener("canvas:zoom", onZoom);
   }, []);
 
-  // Listen to keyboard events to change the cursor state
+  // Cursor chat (/) and reactions (e) shortcuts. Skip while the user is
+  // typing in any form input — otherwise typing '/' or 'e' in the inspector
+  // would silently hijack focus into the chat bubble.
   useEffect(() => {
+    const isTypingInForm = (target: EventTarget | null) => {
+      if (!(target instanceof HTMLElement)) return false;
+      const tag = target.tagName;
+      return tag === "INPUT" || tag === "TEXTAREA" || target.isContentEditable;
+    };
+
     const onKeyUp = (e: KeyboardEvent) => {
+      if (isTypingInForm(e.target)) return;
       if (e.key === "/") {
         setCursorState({
           mode: CursorMode.Chat,
@@ -160,7 +169,7 @@ const Live = ({ canvasRef, fabricRef, undo, redo }: Props) => {
     };
 
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "/") {
+      if (e.key === "/" && !isTypingInForm(e.target)) {
         e.preventDefault();
       }
     };
@@ -476,31 +485,42 @@ const ShortcutHint = () => {
   ];
   return (
     <>
-      <button
-        onClick={() => setOpen((v) => !v)}
-        className='absolute bottom-3 right-3 flex h-6 w-6 items-center justify-center rounded-full bg-primary-grey-200 text-[11px] font-bold text-primary-grey-300 hover:bg-primary-grey-300 hover:text-white'
-        title='Keyboard shortcuts'
-      >
-        ?
-      </button>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            type="button"
+            aria-label="Keyboard shortcuts"
+            onClick={() => setOpen((v) => !v)}
+            className="absolute bottom-3 right-3 flex h-7 w-7 items-center justify-center rounded-full border border-primary-grey-200 bg-primary-black/80 text-[11px] font-semibold text-white shadow-lg backdrop-blur hover:bg-primary-grey-200"
+          >
+            ?
+          </button>
+        </TooltipTrigger>
+        <TooltipContent side="left">Shortcuts</TooltipContent>
+      </Tooltip>
       {open && (
-        <div className='absolute bottom-12 right-3 z-50 w-56 rounded-lg border border-primary-grey-200 bg-primary-black p-4 shadow-xl'>
-          <div className='mb-3 flex items-center justify-between'>
-            <span className='text-[11px] font-semibold uppercase text-primary-grey-300'>
+        <div className="absolute bottom-12 right-3 z-50 w-60 rounded-lg border border-primary-grey-200 bg-primary-black/95 p-3 shadow-xl backdrop-blur">
+          <div className="mb-2 flex items-center justify-between">
+            <span className="text-[10px] font-semibold uppercase tracking-wide text-primary-grey-300">
               Shortcuts
             </span>
-            <button onClick={() => setOpen(false)}>
-              <X className='h-3.5 w-3.5 text-primary-grey-300' />
+            <button
+              type="button"
+              aria-label="Close shortcuts"
+              onClick={() => setOpen(false)}
+              className="rounded p-0.5 text-primary-grey-300 hover:bg-primary-grey-200 hover:text-white"
+            >
+              <X className="h-3.5 w-3.5" />
             </button>
           </div>
-          <div className='flex flex-col gap-2'>
+          <div className="flex flex-col gap-1">
             {all.map((s) => (
               <div
                 key={s.key}
-                className='flex items-center justify-between text-xs text-white'
+                className="flex items-center justify-between rounded px-1.5 py-1 text-xs text-white hover:bg-primary-grey-200"
               >
                 <span>{s.name}</span>
-                <kbd className='rounded bg-primary-grey-200 px-1.5 py-0.5 text-[10px] text-primary-grey-300'>
+                <kbd className="rounded border border-primary-grey-200 bg-primary-black px-1.5 py-0.5 text-[10px] font-medium text-primary-grey-300">
                   {s.shortcut}
                 </kbd>
               </div>
