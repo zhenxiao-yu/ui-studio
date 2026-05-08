@@ -1,14 +1,16 @@
 "use client";
 
 import Image from "next/image";
+import { Hand } from "lucide-react";
 import { memo, useEffect } from "react";
 import { toast } from "sonner";
 
-import { navElements } from "@/constants";
+import { defaultNavElement, navElements } from "@/constants";
 import { ActiveElement, NavbarProps } from "@/types/type";
 import { useRoom, useStatus } from "@/liveblocks.config";
 
 import { Button } from "./ui/button";
+import { Separator } from "./ui/separator";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 import ShapesMenu from "./ShapesMenu";
 import ActiveUsers from "./users/ActiveUsers";
@@ -34,6 +36,12 @@ const formatRoomName = (id: string) => {
   return `${id.slice(0, 6)}…${id.slice(-4)}`;
 };
 
+const PAN_TOOL: ActiveElement = {
+  name: "Pan (H)",
+  value: "pan",
+  icon: "",
+};
+
 const Navbar = ({
   activeElement,
   imageInputRef,
@@ -45,7 +53,8 @@ const Navbar = ({
   const roomName = formatRoomName(room.id);
 
   useEffect(() => {
-    if (status === "disconnected") toast.error("Connection lost. Trying to reconnect…");
+    if (status === "disconnected")
+      toast.error("Connection lost. Trying to reconnect…");
     if (status === "connected") toast.dismiss();
   }, [status]);
 
@@ -55,91 +64,115 @@ const Navbar = ({
       value.some((val) => val?.value === activeElement?.value));
 
   return (
-    <nav className="flex select-none items-center justify-between gap-4 border-b border-primary-grey-200 bg-primary-black px-5 py-2 text-white">
+    <nav className="flex select-none items-center justify-between gap-4 border-b border-primary-grey-200 bg-primary-black px-4 py-2 text-white">
       <div className="flex min-w-0 items-center gap-3">
         <Image
           src="/assets/logo-ui-studio.png"
           alt="UI STUDIO"
-          width={170}
-          height={16}
+          width={150}
+          height={14}
           priority
         />
-        <span className="hidden h-5 w-px bg-primary-grey-200 md:inline-block" />
+        <Separator
+          orientation="vertical"
+          className="hidden h-5 md:inline-block"
+        />
         <span
-          className="hidden truncate font-mono text-xs text-primary-grey-300 md:inline-block"
+          className="hidden truncate font-mono text-[11px] text-primary-grey-300 md:inline-block"
           title={room.id}
         >
           {roomName}
         </span>
       </div>
 
-      <ul className="flex flex-row flex-wrap items-center justify-center gap-1 rounded border border-primary-grey-200 bg-primary-black/40 p-1">
-        {navElements.map((item: ActiveElement | any) => (
-          <Tooltip key={item.name}>
+      <ul className="flex flex-row items-center justify-center gap-0.5 rounded-md border border-primary-grey-200 bg-primary-black/60 p-1">
+        <Tooltip>
+          <TooltipTrigger asChild>
             <li
-              onClick={() => {
-                if (Array.isArray(item.value)) return;
-                handleActiveElement(item);
-              }}
-              className={`group flex items-center justify-center rounded px-2.5 py-1.5 transition-colors
-              ${
-                isActive(item.value)
-                  ? "bg-primary-green"
-                  : "hover:bg-primary-grey-200"
-              }
-              `}
+              onClick={() => handleActiveElement(PAN_TOOL)}
+              className={`flex h-7 w-7 cursor-pointer items-center justify-center rounded transition-colors ${
+                isActive("pan")
+                  ? "bg-primary-green text-primary-black"
+                  : "text-primary-grey-300 hover:bg-primary-grey-200 hover:text-white"
+              }`}
             >
-              <TooltipTrigger asChild>
-                <span>
-                  {Array.isArray(item.value) ? (
-                    <ShapesMenu
-                      item={item}
-                      activeElement={activeElement}
-                      imageInputRef={imageInputRef}
-                      handleActiveElement={handleActiveElement}
-                      handleImageUpload={handleImageUpload}
-                    />
-                  ) : item?.value === "comments" ? (
-                    <NewThread>
+              <Hand className="h-4 w-4" />
+            </li>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">Pan · H</TooltipContent>
+        </Tooltip>
+
+        <Separator orientation="vertical" className="mx-1 h-5" />
+
+        {navElements.map((item: ActiveElement | any) => {
+          const active = isActive(item.value);
+          return (
+            <Tooltip key={item.name}>
+              <li
+                onClick={() => {
+                  if (Array.isArray(item.value)) return;
+                  if (item.value === defaultNavElement.value) {
+                    handleActiveElement(item);
+                    return;
+                  }
+                  handleActiveElement(item);
+                }}
+                className={`group flex h-7 items-center justify-center rounded px-2 transition-colors ${
+                  active
+                    ? "bg-primary-green"
+                    : "hover:bg-primary-grey-200"
+                }`}
+              >
+                <TooltipTrigger asChild>
+                  <span>
+                    {Array.isArray(item.value) ? (
+                      <ShapesMenu
+                        item={item}
+                        activeElement={activeElement}
+                        imageInputRef={imageInputRef}
+                        handleActiveElement={handleActiveElement}
+                        handleImageUpload={handleImageUpload}
+                      />
+                    ) : item?.value === "comments" ? (
+                      <NewThread>
+                        <Button
+                          aria-label={item.name}
+                          className="relative h-4 w-4 object-contain"
+                        >
+                          <Image
+                            src={item.icon}
+                            alt={item.name}
+                            fill
+                            className={active ? "invert" : ""}
+                          />
+                        </Button>
+                      </NewThread>
+                    ) : (
                       <Button
                         aria-label={item.name}
-                        className="relative h-5 w-5 object-contain"
+                        className="relative h-4 w-4 object-contain"
                       >
                         <Image
                           src={item.icon}
                           alt={item.name}
                           fill
-                          className={isActive(item.value) ? "invert" : ""}
+                          className={active ? "invert" : ""}
                         />
                       </Button>
-                    </NewThread>
-                  ) : (
-                    <Button
-                      aria-label={item.name}
-                      className="relative h-5 w-5 object-contain"
-                    >
-                      <Image
-                        src={item.icon}
-                        alt={item.name}
-                        fill
-                        className={isActive(item.value) ? "invert" : ""}
-                      />
-                    </Button>
-                  )}
-                </span>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="text-xs">
-                {item.name}
-              </TooltipContent>
-            </li>
-          </Tooltip>
-        ))}
+                    )}
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">{item.name}</TooltipContent>
+              </li>
+            </Tooltip>
+          );
+        })}
       </ul>
 
       <div className="flex items-center gap-3">
         <Tooltip>
           <TooltipTrigger asChild>
-            <div className="flex items-center gap-1.5 rounded border border-primary-grey-200 px-2 py-1 text-[11px] text-primary-grey-300">
+            <div className="flex items-center gap-1.5 rounded-md border border-primary-grey-200 px-2 py-1 text-[11px] font-medium text-primary-grey-300">
               <span
                 className={`h-2 w-2 rounded-full ${statusDot[status] ?? "bg-gray-400"}`}
               />
@@ -148,10 +181,11 @@ const Navbar = ({
               </span>
             </div>
           </TooltipTrigger>
-          <TooltipContent side="bottom" className="text-xs capitalize">
+          <TooltipContent side="bottom" className="capitalize">
             {status}
           </TooltipContent>
         </Tooltip>
+        <Separator orientation="vertical" className="hidden h-5 sm:block" />
         <div className="hidden sm:block">
           <ActiveUsers />
         </div>

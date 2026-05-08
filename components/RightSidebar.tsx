@@ -15,6 +15,8 @@ import { AlignAxis, RightSidebarProps } from "@/types/type";
 import { bringElement, modifyShape } from "@/lib/shapes";
 import { directionOptions } from "@/constants";
 
+import { ScrollArea } from "./ui/scroll-area";
+import { Slider } from "./ui/slider";
 import Appearance from "./settings/Appearance";
 import Color from "./settings/Color";
 import Dimensions from "./settings/Dimensions";
@@ -85,32 +87,39 @@ const RightSidebar = ({
   const showCornerRadius = elementAttributes.cornerRadius !== "";
   const isFreeform = activeTool === "freeform";
 
+  const Header = (
+    <header className="flex items-center justify-between border-b border-primary-grey-200 px-4 py-3">
+      <h3 className="text-[10px] font-semibold uppercase tracking-wide">
+        Design
+      </h3>
+      <span className="font-mono text-[10px] tabular-nums text-primary-grey-300">
+        {hasSelection ? "selection" : isFreeform ? "brush" : "—"}
+      </span>
+    </header>
+  );
+
   if (!hasSelection) {
     return (
-      <section className="sticky right-0 flex h-full min-w-[227px] max-w-xs select-none flex-col overflow-y-auto border-l border-primary-grey-200 bg-primary-black text-primary-grey-300 max-sm:hidden">
-        <h3 className="border-b border-primary-grey-200 px-4 py-4 text-xs uppercase tracking-wide">
-          Design
-        </h3>
+      <aside className="flex h-full select-none flex-col bg-primary-black text-primary-grey-300">
+        {Header}
 
         {isFreeform ? (
-          <div className="border-b border-primary-grey-200 px-4 py-4">
-            <SectionHeader>Brush</SectionHeader>
-            <div className="mt-3 flex flex-col gap-1.5">
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] text-primary-grey-300">Size</span>
-                <span className="text-[11px] tabular-nums text-white">
-                  {brushSize}px
-                </span>
-              </div>
-              <input
-                type="range"
-                min={1}
-                max={60}
-                value={brushSize}
-                onChange={(e) => setBrushSize(Number(e.target.value))}
-                className="h-1 w-full cursor-pointer appearance-none rounded bg-primary-grey-200 accent-primary-green"
-              />
+          <div className="flex flex-col gap-3 border-b border-primary-grey-200 px-4 py-4">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-medium text-primary-grey-300">
+                Brush size
+              </span>
+              <span className="font-mono text-[11px] tabular-nums text-white">
+                {brushSize}px
+              </span>
             </div>
+            <Slider
+              min={1}
+              max={60}
+              step={1}
+              value={[brushSize]}
+              onValueChange={(values) => setBrushSize(values[0])}
+            />
           </div>
         ) : (
           <div className="flex flex-1 flex-col items-center justify-center gap-3 px-6 text-center">
@@ -121,126 +130,125 @@ const RightSidebar = ({
           </div>
         )}
 
-        <div className="border-t border-primary-grey-200">
+        <div className="mt-auto border-t border-primary-grey-200">
           <Export />
         </div>
-      </section>
+      </aside>
     );
   }
 
   return (
-    <section className="sticky right-0 flex h-full min-w-[227px] max-w-xs select-none flex-col overflow-y-auto border-l border-primary-grey-200 bg-primary-black text-primary-grey-300 max-sm:hidden">
-      <h3 className="px-4 pt-4 text-xs uppercase tracking-wide">Design</h3>
-      <span className="mt-1 border-b border-primary-grey-200 px-4 pb-3 text-[11px] text-primary-grey-300">
-        Adjust the selected object
-      </span>
+    <aside className="flex h-full select-none flex-col bg-primary-black text-primary-grey-300">
+      {Header}
 
-      <SectionHeader>Position &amp; Size</SectionHeader>
-      <Dimensions
-        isEditingRef={isEditingRef}
-        width={elementAttributes.width}
-        height={elementAttributes.height}
-        left={elementAttributes.left}
-        top={elementAttributes.top}
-        angle={elementAttributes.angle}
-        handleInputChange={handleInputChange}
-      />
+      <ScrollArea className="flex-1">
+        <SectionHeader>Position &amp; Size</SectionHeader>
+        <Dimensions
+          isEditingRef={isEditingRef}
+          width={elementAttributes.width}
+          height={elementAttributes.height}
+          left={elementAttributes.left}
+          top={elementAttributes.top}
+          angle={elementAttributes.angle}
+          handleInputChange={handleInputChange}
+        />
 
-      <SectionHeader>Appearance</SectionHeader>
-      <Appearance
-        opacity={elementAttributes.opacity}
-        strokeWidth={elementAttributes.strokeWidth}
-        cornerRadius={elementAttributes.cornerRadius}
-        showCornerRadius={showCornerRadius}
-        isEditingRef={isEditingRef}
-        handleInputChange={handleInputChange}
-      />
+        <SectionHeader>Appearance</SectionHeader>
+        <Appearance
+          opacity={elementAttributes.opacity}
+          strokeWidth={elementAttributes.strokeWidth}
+          cornerRadius={elementAttributes.cornerRadius}
+          showCornerRadius={showCornerRadius}
+          isEditingRef={isEditingRef}
+          handleInputChange={handleInputChange}
+        />
 
-      <SectionHeader>Fill &amp; Stroke</SectionHeader>
-      <Color
-        inputRef={strokeInputRef}
-        attribute={elementAttributes.stroke}
-        placeholder="stroke"
-        attributeType="stroke"
-        handleInputChange={handleInputChange}
-      />
-      <Color
-        inputRef={colorInputRef}
-        attribute={elementAttributes.fill}
-        placeholder="fill"
-        attributeType="fill"
-        handleInputChange={handleInputChange}
-      />
+        <SectionHeader>Fill &amp; Stroke</SectionHeader>
+        <Color
+          inputRef={strokeInputRef}
+          attribute={elementAttributes.stroke}
+          placeholder="stroke"
+          attributeType="stroke"
+          handleInputChange={handleInputChange}
+        />
+        <Color
+          inputRef={colorInputRef}
+          attribute={elementAttributes.fill}
+          placeholder="fill"
+          attributeType="fill"
+          handleInputChange={handleInputChange}
+        />
 
-      {isText && (
-        <>
-          <SectionHeader>Text</SectionHeader>
-          <Text
-            fontFamily={elementAttributes.fontFamily}
-            fontSize={elementAttributes.fontSize}
-            fontWeight={elementAttributes.fontWeight}
-            handleInputChange={handleInputChange}
-          />
-        </>
-      )}
+        {isText && (
+          <>
+            <SectionHeader>Text</SectionHeader>
+            <Text
+              fontFamily={elementAttributes.fontFamily}
+              fontSize={elementAttributes.fontSize}
+              fontWeight={elementAttributes.fontWeight}
+              handleInputChange={handleInputChange}
+            />
+          </>
+        )}
 
-      <SectionHeader>Arrange</SectionHeader>
-      <div className="flex flex-col gap-3 border-b border-primary-grey-200 px-4 py-3">
-        <div className="grid grid-cols-3 gap-1">
-          {ALIGN_BUTTONS.map(({ axis, label, Icon }) => (
+        <SectionHeader>Arrange</SectionHeader>
+        <div className="flex flex-col gap-2 border-b border-primary-grey-200 px-4 py-3">
+          <div className="grid grid-cols-3 gap-1">
+            {ALIGN_BUTTONS.map(({ axis, label, Icon }) => (
+              <button
+                key={axis}
+                type="button"
+                title={label}
+                aria-label={label}
+                onClick={() => alignSelected(axis)}
+                className="flex h-7 w-full items-center justify-center rounded border border-primary-grey-200 text-primary-grey-300 hover:bg-primary-green hover:text-primary-black"
+              >
+                <Icon className="h-3.5 w-3.5" />
+              </button>
+            ))}
+          </div>
+          <div className="grid grid-cols-3 gap-1">
+            {directionOptions.map((option) => (
+              <button
+                key={option.value}
+                title={option.label}
+                onClick={() =>
+                  bringElement({
+                    canvas: fabricRef.current as fabric.Canvas,
+                    direction: option.value,
+                    syncShapeInStorage,
+                  })
+                }
+                className="flex h-7 w-full items-center justify-center gap-1 rounded border border-primary-grey-200 text-[10px] text-primary-grey-300 hover:bg-primary-green hover:text-primary-black"
+              >
+                <Image
+                  src={option.icon}
+                  alt={option.label}
+                  width={12}
+                  height={12}
+                />
+                <span>
+                  {option.label.replace("Bring to ", "").replace("Send to ", "")}
+                </span>
+              </button>
+            ))}
             <button
-              key={axis}
               type="button"
-              title={label}
-              aria-label={label}
-              onClick={() => alignSelected(axis)}
-              className="flex h-7 w-full items-center justify-center rounded border border-primary-grey-200 text-primary-grey-300 hover:bg-primary-green hover:text-primary-black"
+              title="Duplicate (⌘ D)"
+              aria-label="Duplicate"
+              onClick={duplicateActive}
+              className="flex h-7 w-full items-center justify-center gap-1 rounded border border-primary-grey-200 text-[10px] text-primary-grey-300 hover:bg-primary-green hover:text-primary-black"
             >
-              <Icon className="h-3.5 w-3.5" />
+              <Copy className="h-3 w-3" />
+              <span>Dup</span>
             </button>
-          ))}
+          </div>
         </div>
-        <div className="flex gap-1">
-          {directionOptions.map((option) => (
-            <button
-              key={option.value}
-              title={option.label}
-              onClick={() =>
-                bringElement({
-                  canvas: fabricRef.current as fabric.Canvas,
-                  direction: option.value,
-                  syncShapeInStorage,
-                })
-              }
-              className="flex h-7 w-full items-center justify-center gap-1.5 rounded border border-primary-grey-200 text-[10px] text-primary-grey-300 hover:bg-primary-green hover:text-primary-black"
-            >
-              <Image
-                src={option.icon}
-                alt={option.label}
-                width={12}
-                height={12}
-              />
-              <span>
-                {option.label.replace("Bring to ", "").replace("Send to ", "")}
-              </span>
-            </button>
-          ))}
-          <button
-            type="button"
-            title="Duplicate (⌘ D)"
-            aria-label="Duplicate"
-            onClick={duplicateActive}
-            className="flex h-7 w-full items-center justify-center gap-1.5 rounded border border-primary-grey-200 text-[10px] text-primary-grey-300 hover:bg-primary-green hover:text-primary-black"
-          >
-            <Copy className="h-3 w-3" />
-            <span>Dup</span>
-          </button>
-        </div>
-      </div>
 
-      <SectionHeader>Export</SectionHeader>
-      <Export />
-    </section>
+        <SectionHeader>Export</SectionHeader>
+        <Export />
+      </ScrollArea>
+    </aside>
   );
 };
 

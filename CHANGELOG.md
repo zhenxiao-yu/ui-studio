@@ -36,6 +36,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 - `modifyShape` handles numeric coercion and applies opacity (0–100% UI mapped to 0–1 canvas) plus rectangle corner radius (`rx` / `ry`).
 - Inspector `Dimensions` reorganized into a 2×2 grid of X / Y / W / H plus a rotation field.
 
+### Added (UI library + polish)
+- Inter (sans) and JetBrains Mono (mono) loaded via `next/font/google`, exposed as `font-sans` and `font-mono` Tailwind utilities.
+- Resizable left and right sidebars via `react-resizable-panels` (v2). Layouts persist across reloads via the panel group `autoSaveId`.
+- Radix primitives wrapped under `components/ui/`: `Slider`, `Separator`, `ScrollArea`, `Toolbar`, `Toggle`.
+- Native `<input type="range">` replaced with `Slider` for opacity and brush size.
+- Sidebar contents wrapped in `ScrollArea` so long inspector or layer lists scroll cleanly with a styled scrollbar.
+- Pan tool: dedicated Hand button in the toolbar plus `H` keyboard shortcut. Mouse-down while Pan is active drags the canvas (alongside the existing Space-hold pan).
+- All canvas-overlay dividers and toolbar dividers now use Radix `Separator`.
+
 ### Fixed
 - Tooltips now use a fixed dark surface (`bg-primary-black`, white text, grey border) so they remain readable against any canvas color, including white or photographic backgrounds.
 - Cursor chat bubble redesigned with the editor's dark theme — solid bubble, kbd hints for ↵ and Esc, no more `bg-blue-500` clash.

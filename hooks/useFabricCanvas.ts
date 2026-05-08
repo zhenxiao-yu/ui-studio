@@ -58,6 +58,7 @@ const DEFAULT_ATTRIBUTES: Attributes = {
 // Single-key tool shortcuts (typed without modifier; ignored while editing text)
 const TOOL_KEY_MAP: Record<string, string> = {
   v: "select",
+  h: "pan",
   r: "rectangle",
   o: "circle",
   l: "line",
@@ -154,6 +155,9 @@ export const useFabricCanvas = ({
           selectedShapeRef.current = elem?.value as string;
           if (fabricRef.current) {
             fabricRef.current.isDrawingMode = elem?.value === "freeform";
+            fabricRef.current.defaultCursor =
+              elem?.value === "pan" ? "grab" : "default";
+            fabricRef.current.selection = elem?.value !== "pan";
           }
           break;
       }
@@ -257,8 +261,8 @@ export const useFabricCanvas = ({
     const canvas = initializeFabric({ canvasRef, fabricRef });
 
     canvas.on("mouse:down", (options) => {
-      // Space + drag = pan mode (skip shape creation/selection)
-      if (isSpacePressed.current) {
+      // Space + drag OR Pan tool active = pan (skip shape creation/selection)
+      if (isSpacePressed.current || selectedShapeRef.current === "pan") {
         isPanning.current = true;
         const e = options.e as MouseEvent;
         lastPan.current = { x: e.clientX, y: e.clientY };

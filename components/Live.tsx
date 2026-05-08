@@ -30,6 +30,7 @@ import {
   ContextMenuItem,
   ContextMenuTrigger,
 } from "./ui/context-menu";
+import { Separator } from "./ui/separator";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
 type Props = {
@@ -372,11 +373,12 @@ const StatusBar = ({
   objectCount: number;
   status: string;
 }) => (
-  <div className="pointer-events-none absolute bottom-3 left-3 flex select-none items-center gap-3 rounded border border-primary-grey-200 bg-primary-black/80 px-3 py-1.5 text-[11px] text-primary-grey-300 backdrop-blur">
-    <span>
-      {objectCount} {objectCount === 1 ? "object" : "objects"}
+  <div className="pointer-events-none absolute bottom-3 left-3 flex select-none items-center gap-2.5 rounded-md border border-primary-grey-200 bg-primary-black/80 px-3 py-1.5 text-[11px] font-medium text-primary-grey-300 shadow-lg backdrop-blur">
+    <span className="font-mono tabular-nums text-white">
+      {objectCount}
     </span>
-    <span className="h-3 w-px bg-primary-grey-200" />
+    <span>{objectCount === 1 ? "object" : "objects"}</span>
+    <Separator orientation="vertical" className="h-3" />
     <span className="flex items-center gap-1.5 capitalize">
       <span
         className={`h-1.5 w-1.5 rounded-full ${statusDot[status] ?? "bg-gray-400"}`}
@@ -399,7 +401,7 @@ const ZoomControls = ({
   };
 
   return (
-    <div className="absolute bottom-3 right-12 flex select-none items-center gap-0.5 rounded border border-primary-grey-200 bg-primary-black/80 p-0.5 text-primary-grey-300 backdrop-blur">
+    <div className="absolute bottom-3 right-12 flex select-none items-center gap-0.5 rounded-md border border-primary-grey-200 bg-primary-black/80 p-0.5 text-primary-grey-300 shadow-lg backdrop-blur">
       <Tooltip>
         <TooltipTrigger asChild>
           <button
@@ -422,7 +424,7 @@ const ZoomControls = ({
             type="button"
             aria-label="Reset zoom to 100%"
             onClick={run(resetZoom)}
-            className="min-w-[3.5rem] rounded px-1 py-0.5 text-center text-[11px] tabular-nums hover:bg-primary-grey-200"
+            className="min-w-[3.5rem] rounded px-1 py-0.5 text-center font-mono text-[11px] tabular-nums hover:bg-primary-grey-200"
           >
             {zoom}%
           </button>
@@ -448,7 +450,7 @@ const ZoomControls = ({
         </TooltipContent>
       </Tooltip>
 
-      <span className="mx-0.5 h-4 w-px bg-primary-grey-200" />
+      <Separator orientation="vertical" className="mx-0.5 h-4" />
 
       <Tooltip>
         <TooltipTrigger asChild>
@@ -520,7 +522,7 @@ const ShortcutHint = () => {
                 className="flex items-center justify-between rounded px-1.5 py-1 text-xs text-white hover:bg-primary-grey-200"
               >
                 <span>{s.name}</span>
-                <kbd className="rounded border border-primary-grey-200 bg-primary-black px-1.5 py-0.5 text-[10px] font-medium text-primary-grey-300">
+                <kbd className="rounded border border-primary-grey-200 bg-primary-black px-1.5 py-0.5 font-mono text-[10px] font-medium text-primary-grey-300">
                   {s.shortcut}
                 </kbd>
               </div>

@@ -1,4 +1,4 @@
-import { Work_Sans } from "next/font/google";
+import { Inter, JetBrains_Mono } from "next/font/google";
 import { Toaster } from "sonner";
 
 import "./globals.css";
@@ -11,17 +11,25 @@ export const metadata = {
     "A minimalist and intuitive UI design web application inspired by Figma, designed to facilitate real-time collaboration and seamless design experiences.",
 };
 
-const workSans = Work_Sans({
+const inter = Inter({
   subsets: ["latin"],
-  variable: "--font-work-sans",
-  weight: ["400", "600", "700"],
+  variable: "--font-sans",
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-mono",
+  weight: ["400", "500", "600"],
+  display: "swap",
 });
 
 const RootLayout = ({ children }: { children: React.ReactNode }) => (
-  <html lang='en'>
-    <body className={`${workSans.className} bg-primary-grey-800`}>
+  <html lang="en" className={`${inter.variable} ${jetbrainsMono.variable}`}>
+    <body className="bg-primary-grey-800 font-sans antialiased">
       <ErrorBoundary>
-        <TooltipProvider>{children}</TooltipProvider>
+        <TooltipProvider delayDuration={120}>{children}</TooltipProvider>
         <Toaster theme="dark" position="bottom-right" richColors />
       </ErrorBoundary>
     </body>

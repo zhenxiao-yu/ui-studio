@@ -61,12 +61,12 @@ const CursorChat = ({
           />
         </div>
         <div className="flex items-center gap-2 text-[10px] text-primary-grey-300">
-          <kbd className="rounded bg-primary-grey-200 px-1.5 py-0.5 text-[9px] text-white">
+          <kbd className="rounded bg-primary-grey-200 px-1.5 py-0.5 font-mono text-[9px] text-white">
             ↵
           </kbd>
           <span>send</span>
           <span className="text-primary-grey-200">·</span>
-          <kbd className="rounded bg-primary-grey-200 px-1.5 py-0.5 text-[9px] text-white">
+          <kbd className="rounded bg-primary-grey-200 px-1.5 py-0.5 font-mono text-[9px] text-white">
             Esc
           </kbd>
           <span>close</span>
