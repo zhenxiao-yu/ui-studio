@@ -68,6 +68,8 @@ export const useFabricCanvas = ({
     stroke: "#aabbcc",
   });
 
+  const [activeObjectId, setActiveObjectId] = useState<string | null>(null);
+
   const handleActiveElement = (elem: ActiveElement) => {
     setActiveElement(elem);
 
@@ -185,13 +187,38 @@ export const useFabricCanvas = ({
       handleCanvasObjectMoving({ options })
     );
 
-    canvas.on("selection:created", (options) =>
+    const trackActiveSelection = (options: any) => {
       handleCanvasSelectionCreated({
         options,
         isEditingRef,
         setElementAttributes,
-      })
-    );
+      });
+      const selected = options?.selected?.[0] as
+        | (fabric.Object & { objectId?: string })
+        | undefined;
+      if (selected) {
+        activeObjectRef.current = selected;
+        setActiveObjectId(selected.objectId ?? null);
+      }
+    };
+
+    canvas.on("selection:created", trackActiveSelection);
+    canvas.on("selection:updated", trackActiveSelection);
+
+    canvas.on("selection:cleared", () => {
+      if (isEditingRef.current) return;
+      activeObjectRef.current = null;
+      setActiveObjectId(null);
+      setElementAttributes({
+        width: "",
+        height: "",
+        fontSize: "",
+        fontFamily: "",
+        fontWeight: "",
+        fill: "#aabbcc",
+        stroke: "#aabbcc",
+      });
+    });
 
     canvas.on("object:scaling", (options) =>
       handleCanvasObjectScaling({ options, setElementAttributes })
@@ -238,6 +265,7 @@ export const useFabricCanvas = ({
     setElementAttributes,
     isEditingRef,
     activeObjectRef,
+    activeObjectId,
     handleImageUploadChange,
   };
 };

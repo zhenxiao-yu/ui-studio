@@ -1,15 +1,19 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { X } from "lucide-react";
+import { fabric } from "fabric";
+import { Maximize2, Minus, Plus, X } from "lucide-react";
 
 import {
   useBroadcastEvent,
   useEventListener,
   useMyPresence,
   useOthers,
+  useStatus,
+  useStorage,
 } from "@/liveblocks.config";
 import useInterval from "@/hooks/useInterval";
+import { fitCanvasToScreen, resetZoom, zoomIn, zoomOut } from "@/lib/canvas";
 import { CursorMode, CursorState, Reaction, ReactionEvent } from "@/types/type";
 import { shortcuts } from "@/constants";
 
@@ -26,14 +30,16 @@ import {
   ContextMenuItem,
   ContextMenuTrigger,
 } from "./ui/context-menu";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
 type Props = {
   canvasRef: React.MutableRefObject<HTMLCanvasElement | null>;
+  fabricRef?: React.MutableRefObject<fabric.Canvas | null>;
   undo: () => void;
   redo: () => void;
 };
 
-const Live = ({ canvasRef, undo, redo }: Props) => {
+const Live = ({ canvasRef, fabricRef, undo, redo }: Props) => {
   /**
    * useOthers returns the list of other users in the room.
    *
@@ -57,6 +63,8 @@ const Live = ({ canvasRef, undo, redo }: Props) => {
   const broadcast = useBroadcastEvent();
 
   const [zoom, setZoom] = useState(100);
+  const status = useStatus();
+  const objectCount = useStorage((root) => root.canvasObjects?.size ?? 0);
 
   // store the reactions created on mouse click
   const [reactions, setReactions] = useState<Reaction[]>([]);
@@ -312,10 +320,14 @@ const Live = ({ canvasRef, undo, redo }: Props) => {
         {/* Show the comments */}
         <Comments />
 
-        {/* Zoom level indicator */}
-        <div className='pointer-events-none absolute bottom-3 left-3 select-none rounded bg-primary-grey-200 px-2 py-1 text-[11px] text-primary-grey-300'>
-          {zoom}%
-        </div>
+        {/* Status bar */}
+        <StatusBar
+          objectCount={objectCount}
+          status={status}
+        />
+
+        {/* Zoom controls */}
+        <ZoomControls fabricRef={fabricRef} zoom={zoom} />
 
         {/* Shortcut hint button */}
         <ShortcutHint />
@@ -337,6 +349,117 @@ const Live = ({ canvasRef, undo, redo }: Props) => {
   );
 };
 
+const statusDot: Record<string, string> = {
+  connected: "bg-green-400",
+  connecting: "bg-yellow-400",
+  reconnecting: "bg-yellow-400",
+  disconnected: "bg-red-500",
+};
+
+const StatusBar = ({
+  objectCount,
+  status,
+}: {
+  objectCount: number;
+  status: string;
+}) => (
+  <div className="pointer-events-none absolute bottom-3 left-3 flex select-none items-center gap-3 rounded border border-primary-grey-200 bg-primary-black/80 px-3 py-1.5 text-[11px] text-primary-grey-300 backdrop-blur">
+    <span>
+      {objectCount} {objectCount === 1 ? "object" : "objects"}
+    </span>
+    <span className="h-3 w-px bg-primary-grey-200" />
+    <span className="flex items-center gap-1.5 capitalize">
+      <span
+        className={`h-1.5 w-1.5 rounded-full ${statusDot[status] ?? "bg-gray-400"}`}
+      />
+      {status}
+    </span>
+  </div>
+);
+
+const ZoomControls = ({
+  fabricRef,
+  zoom,
+}: {
+  fabricRef?: React.MutableRefObject<fabric.Canvas | null>;
+  zoom: number;
+}) => {
+  const run = (fn: (c: fabric.Canvas) => void) => () => {
+    const canvas = fabricRef?.current;
+    if (canvas) fn(canvas);
+  };
+
+  return (
+    <div className="absolute bottom-3 right-12 flex select-none items-center gap-0.5 rounded border border-primary-grey-200 bg-primary-black/80 p-0.5 text-primary-grey-300 backdrop-blur">
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            type="button"
+            aria-label="Zoom out"
+            onClick={run(zoomOut)}
+            className="flex h-6 w-6 items-center justify-center rounded text-white hover:bg-primary-grey-200"
+          >
+            <Minus className="h-3 w-3" />
+          </button>
+        </TooltipTrigger>
+        <TooltipContent side="top" className="text-xs">
+          Zoom out · ⌘ −
+        </TooltipContent>
+      </Tooltip>
+
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            type="button"
+            aria-label="Reset zoom to 100%"
+            onClick={run(resetZoom)}
+            className="min-w-[3.5rem] rounded px-1 py-0.5 text-center text-[11px] tabular-nums hover:bg-primary-grey-200"
+          >
+            {zoom}%
+          </button>
+        </TooltipTrigger>
+        <TooltipContent side="top" className="text-xs">
+          Reset zoom · ⌘ 0
+        </TooltipContent>
+      </Tooltip>
+
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            type="button"
+            aria-label="Zoom in"
+            onClick={run(zoomIn)}
+            className="flex h-6 w-6 items-center justify-center rounded text-white hover:bg-primary-grey-200"
+          >
+            <Plus className="h-3 w-3" />
+          </button>
+        </TooltipTrigger>
+        <TooltipContent side="top" className="text-xs">
+          Zoom in · ⌘ +
+        </TooltipContent>
+      </Tooltip>
+
+      <span className="mx-0.5 h-4 w-px bg-primary-grey-200" />
+
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            type="button"
+            aria-label="Fit to screen"
+            onClick={run(fitCanvasToScreen)}
+            className="flex h-6 w-6 items-center justify-center rounded text-white hover:bg-primary-grey-200"
+          >
+            <Maximize2 className="h-3 w-3" />
+          </button>
+        </TooltipTrigger>
+        <TooltipContent side="top" className="text-xs">
+          Fit to screen · ⌘ 1
+        </TooltipContent>
+      </Tooltip>
+    </div>
+  );
+};
+
 const ShortcutHint = () => {
   const [open, setOpen] = useState(false);
   const all = [
@@ -346,7 +469,10 @@ const ShortcutHint = () => {
     { key: "7", name: "Copy", shortcut: "⌘ + C" },
     { key: "8", name: "Paste", shortcut: "⌘ + V" },
     { key: "9", name: "Cut", shortcut: "⌘ + X" },
-    { key: "10", name: "Zoom", shortcut: "Scroll" },
+    { key: "10", name: "Zoom in", shortcut: "⌘ + +" },
+    { key: "11", name: "Zoom out", shortcut: "⌘ + −" },
+    { key: "12", name: "Reset zoom", shortcut: "⌘ + 0" },
+    { key: "13", name: "Fit to screen", shortcut: "⌘ + 1" },
   ];
   return (
     <>

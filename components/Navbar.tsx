@@ -1,12 +1,12 @@
 "use client";
 
 import Image from "next/image";
-import { memo, useEffect, useState } from "react";
+import { memo, useEffect } from "react";
 import { toast } from "sonner";
 
 import { navElements } from "@/constants";
 import { ActiveElement, NavbarProps } from "@/types/type";
-import { useStatus } from "@/liveblocks.config";
+import { useRoom, useStatus } from "@/liveblocks.config";
 
 import { Button } from "./ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
@@ -21,6 +21,19 @@ const statusDot: Record<string, string> = {
   disconnected: "bg-red-500",
 };
 
+const statusLabel: Record<string, string> = {
+  connected: "Live",
+  connecting: "Connecting…",
+  reconnecting: "Reconnecting…",
+  disconnected: "Offline",
+};
+
+const formatRoomName = (id: string) => {
+  if (!id || id === "fig-room") return "Untitled board";
+  if (id.length <= 14) return id;
+  return `${id.slice(0, 6)}…${id.slice(-4)}`;
+};
+
 const Navbar = ({
   activeElement,
   imageInputRef,
@@ -28,55 +41,39 @@ const Navbar = ({
   handleActiveElement,
 }: NavbarProps) => {
   const status = useStatus();
-  const [isMobile, setIsMobile] = useState(false);
+  const room = useRoom();
+  const roomName = formatRoomName(room.id);
 
   useEffect(() => {
     if (status === "disconnected") toast.error("Connection lost. Trying to reconnect…");
     if (status === "connected") toast.dismiss();
   }, [status]);
 
-  useEffect(() => {
-    const userAgent =
-      typeof window.navigator === "undefined" ? "" : navigator.userAgent;
-    const mobile = /iPhone|iPad|iPod|Android/i.test(userAgent);
-    setIsMobile(mobile);
-  }, []);
-
   const isActive = (value: string | Array<ActiveElement>) =>
     (activeElement && activeElement.value === value) ||
     (Array.isArray(value) &&
       value.some((val) => val?.value === activeElement?.value));
 
-  if (isMobile) {
-    return (
-      <div className='flex h-screen w-full flex-col items-center justify-center gap-6 bg-primary-black px-8 text-white'>
-        <Image src='/assets/logo-ui-studio.png' alt='UI STUDIO' width={200} height={20} />
-        <div className='flex flex-col items-center gap-3 text-center'>
-          <p className='text-lg font-semibold'>Best on Desktop</p>
-          <p className='max-w-xs text-sm text-primary-grey-300'>
-            UI Studio is a canvas-based design tool. For the best experience,
-            open it on a computer with a mouse and keyboard.
-          </p>
-        </div>
-        <p className='text-xs text-primary-grey-300 opacity-60'>
-          Share the board URL on your desktop to continue.
-        </p>
-      </div>
-    );
-  }
-
   return (
-    <nav className='flex select-none items-center justify-between gap-4 bg-primary-black px-5 py-2 text-white'>
-      <div className='flex items-center'>
+    <nav className="flex select-none items-center justify-between gap-4 border-b border-primary-grey-200 bg-primary-black px-5 py-2 text-white">
+      <div className="flex min-w-0 items-center gap-3">
         <Image
-          src='/assets/logo-ui-studio.png'
-          alt='UI STUDIO'
-          width={205}
-          height={20}
+          src="/assets/logo-ui-studio.png"
+          alt="UI STUDIO"
+          width={170}
+          height={16}
+          priority
         />
+        <span className="hidden h-5 w-px bg-primary-grey-200 md:inline-block" />
+        <span
+          className="hidden truncate font-mono text-xs text-primary-grey-300 md:inline-block"
+          title={room.id}
+        >
+          {roomName}
+        </span>
       </div>
 
-      <ul className='flex flex-row flex-wrap items-center justify-center gap-2'>
+      <ul className="flex flex-row flex-wrap items-center justify-center gap-1 rounded border border-primary-grey-200 bg-primary-black/40 p-1">
         {navElements.map((item: ActiveElement | any) => (
           <Tooltip key={item.name}>
             <li
@@ -84,8 +81,12 @@ const Navbar = ({
                 if (Array.isArray(item.value)) return;
                 handleActiveElement(item);
               }}
-              className={`group flex items-center justify-center px-2.5 py-2
-              ${isActive(item.value) ? "bg-primary-green" : "hover:bg-primary-grey-200"}
+              className={`group flex items-center justify-center rounded px-2.5 py-1.5 transition-colors
+              ${
+                isActive(item.value)
+                  ? "bg-primary-green"
+                  : "hover:bg-primary-grey-200"
+              }
               `}
             >
               <TooltipTrigger asChild>
@@ -100,7 +101,10 @@ const Navbar = ({
                     />
                   ) : item?.value === "comments" ? (
                     <NewThread>
-                      <Button className='relative h-5 w-5 object-contain'>
+                      <Button
+                        aria-label={item.name}
+                        className="relative h-5 w-5 object-contain"
+                      >
                         <Image
                           src={item.icon}
                           alt={item.name}
@@ -110,7 +114,10 @@ const Navbar = ({
                       </Button>
                     </NewThread>
                   ) : (
-                    <Button className='relative h-5 w-5 object-contain'>
+                    <Button
+                      aria-label={item.name}
+                      className="relative h-5 w-5 object-contain"
+                    >
                       <Image
                         src={item.icon}
                         alt={item.name}
@@ -129,18 +136,23 @@ const Navbar = ({
         ))}
       </ul>
 
-      <div className='flex items-center gap-3'>
+      <div className="flex items-center gap-3">
         <Tooltip>
           <TooltipTrigger asChild>
-            <span
-              className={`h-2.5 w-2.5 cursor-default rounded-full ${statusDot[status] ?? "bg-gray-400"}`}
-            />
+            <div className="flex items-center gap-1.5 rounded border border-primary-grey-200 px-2 py-1 text-[11px] text-primary-grey-300">
+              <span
+                className={`h-2 w-2 rounded-full ${statusDot[status] ?? "bg-gray-400"}`}
+              />
+              <span className="hidden capitalize sm:inline-block">
+                {statusLabel[status] ?? status}
+              </span>
+            </div>
           </TooltipTrigger>
           <TooltipContent side="bottom" className="text-xs capitalize">
             {status}
           </TooltipContent>
         </Tooltip>
-        <div className='hidden sm:block'>
+        <div className="hidden sm:block">
           <ActiveUsers />
         </div>
       </div>

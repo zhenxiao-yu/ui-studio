@@ -104,6 +104,7 @@ export type RightSidebarProps = {
   setElementAttributes: React.Dispatch<React.SetStateAction<Attributes>>;
   fabricRef: React.RefObject<fabric.Canvas | null>;
   activeObjectRef: React.RefObject<fabric.Object | null>;
+  activeObjectId: string | null;
   isEditingRef: React.MutableRefObject<boolean>;
   syncShapeInStorage: (obj: any) => void;
 };

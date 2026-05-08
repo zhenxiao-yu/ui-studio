@@ -2,6 +2,17 @@ import { fabric } from "fabric";
 import { v4 as uuidv4 } from "uuid";
 
 import { CustomFabricObject } from "@/types/type";
+import { fitCanvasToScreen, resetZoom, zoomIn, zoomOut } from "@/lib/canvas";
+
+const isEditingTextInput = (target: EventTarget | null) => {
+  if (!(target instanceof HTMLElement)) return false;
+  const tag = target.tagName;
+  return (
+    tag === "INPUT" ||
+    tag === "TEXTAREA" ||
+    target.isContentEditable
+  );
+};
 
 export const handleCopy = (canvas: fabric.Canvas) => {
   const activeObjects = canvas.getActiveObjects();
@@ -121,6 +132,30 @@ export const handleKeyDown = ({
   // check if the key pressed is ctrl/cmd + y (redo)
   if ((e?.ctrlKey || e?.metaKey) && e.keyCode === 89) {
     redo();
+  }
+
+  // Zoom shortcuts (ignore while typing in form inputs)
+  if ((e?.ctrlKey || e?.metaKey) && canvas && !isEditingTextInput(e.target)) {
+    // Cmd/Ctrl + = (or +)
+    if (e.key === "=" || e.key === "+") {
+      e.preventDefault();
+      zoomIn(canvas);
+    }
+    // Cmd/Ctrl + -
+    if (e.key === "-") {
+      e.preventDefault();
+      zoomOut(canvas);
+    }
+    // Cmd/Ctrl + 0 — reset to 100%
+    if (e.key === "0") {
+      e.preventDefault();
+      resetZoom(canvas);
+    }
+    // Cmd/Ctrl + 1 — fit to screen
+    if (e.key === "1") {
+      e.preventDefault();
+      fitCanvasToScreen(canvas);
+    }
   }
 
   if (e.keyCode === 191 && !e.shiftKey) {

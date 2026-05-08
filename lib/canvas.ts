@@ -456,6 +456,17 @@ export const handleResize = ({ canvas }: { canvas: fabric.Canvas | null }) => {
   });
 };
 
+export const ZOOM_MIN = 0.2;
+export const ZOOM_MAX = 4;
+const ZOOM_STEP = 1.2;
+
+const clampZoom = (zoom: number) =>
+  Math.min(Math.max(zoom, ZOOM_MIN), ZOOM_MAX);
+
+const broadcastZoom = (zoom: number) => {
+  window.dispatchEvent(new CustomEvent("canvas:zoom", { detail: { zoom } }));
+};
+
 // Zoom canvas in or out with mouse scroll
 export const handleCanvasZoom = ({
   options,
@@ -465,18 +476,68 @@ export const handleCanvasZoom = ({
   canvas: fabric.Canvas;
 }) => {
   const delta = options.e?.deltaY;
-  let zoom = canvas.getZoom();
-
-  const minZoom = 0.2;
-  const maxZoom = 1;
-  const zoomStep = 0.001;
-
-  zoom = Math.min(Math.max(minZoom, zoom + delta * zoomStep), maxZoom);
+  const zoom = clampZoom(canvas.getZoom() + delta * 0.001);
 
   canvas.zoomToPoint({ x: options.e.offsetX, y: options.e.offsetY }, zoom);
-
-  window.dispatchEvent(new CustomEvent("canvas:zoom", { detail: { zoom } }));
+  broadcastZoom(zoom);
 
   options.e.preventDefault();
   options.e.stopPropagation();
+};
+
+const zoomToCenter = (canvas: fabric.Canvas, zoom: number) => {
+  const cx = canvas.getWidth() / 2;
+  const cy = canvas.getHeight() / 2;
+  canvas.zoomToPoint({ x: cx, y: cy }, zoom);
+  broadcastZoom(zoom);
+};
+
+export const zoomIn = (canvas: fabric.Canvas) =>
+  zoomToCenter(canvas, clampZoom(canvas.getZoom() * ZOOM_STEP));
+
+export const zoomOut = (canvas: fabric.Canvas) =>
+  zoomToCenter(canvas, clampZoom(canvas.getZoom() / ZOOM_STEP));
+
+export const resetZoom = (canvas: fabric.Canvas) => {
+  canvas.setViewportTransform([1, 0, 0, 1, 0, 0]);
+  broadcastZoom(1);
+  canvas.requestRenderAll();
+};
+
+export const fitCanvasToScreen = (canvas: fabric.Canvas) => {
+  const objects = canvas.getObjects();
+  if (objects.length === 0) {
+    resetZoom(canvas);
+    return;
+  }
+
+  let minX = Infinity;
+  let minY = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+
+  objects.forEach((obj) => {
+    const rect = obj.getBoundingRect(true, true);
+    minX = Math.min(minX, rect.left);
+    minY = Math.min(minY, rect.top);
+    maxX = Math.max(maxX, rect.left + rect.width);
+    maxY = Math.max(maxY, rect.top + rect.height);
+  });
+
+  const contentW = maxX - minX;
+  const contentH = maxY - minY;
+  if (contentW <= 0 || contentH <= 0) return;
+
+  const padding = 60;
+  const cw = canvas.getWidth();
+  const ch = canvas.getHeight();
+  const scale = clampZoom(
+    Math.min((cw - padding * 2) / contentW, (ch - padding * 2) / contentH)
+  );
+  const tx = (cw - contentW * scale) / 2 - minX * scale;
+  const ty = (ch - contentH * scale) / 2 - minY * scale;
+
+  canvas.setViewportTransform([scale, 0, 0, scale, tx, ty]);
+  broadcastZoom(scale);
+  canvas.requestRenderAll();
 };
