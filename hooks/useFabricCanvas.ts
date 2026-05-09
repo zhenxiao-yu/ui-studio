@@ -452,11 +452,21 @@ export const useFabricCanvas = ({
     window.addEventListener("keydown", onKeyDown);
     window.addEventListener("keyup", onKeyUp);
 
+    // Track container size changes (resizable panels, mobile rotation, etc.)
+    // — window.resize alone misses panel-drag and post-refresh layout restore.
+    const container = document.getElementById("canvas");
+    const resizeObserver =
+      container && typeof ResizeObserver !== "undefined"
+        ? new ResizeObserver(() => onResize())
+        : null;
+    if (container && resizeObserver) resizeObserver.observe(container);
+
     return () => {
       canvas.dispose();
       window.removeEventListener("resize", onResize);
       window.removeEventListener("keydown", onKeyDown);
       window.removeEventListener("keyup", onKeyUp);
+      resizeObserver?.disconnect();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [

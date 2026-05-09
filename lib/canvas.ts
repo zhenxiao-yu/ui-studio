@@ -248,36 +248,17 @@ export const handlePathCreated = ({
   syncShapeInStorage(path);
 };
 
-// Restrict object movement to within canvas boundaries
+// Keep coords fresh while dragging. The canvas is an infinite world
+// (with pan/zoom), so we deliberately don't clamp position to the
+// viewport rectangle — that would create an invisible wall when zoomed
+// out or panned away from origin.
 export const handleCanvasObjectMoving = ({
   options,
 }: {
   options: fabric.IEvent;
 }) => {
-  const target = options.target as fabric.Object;
-  const canvas = target.canvas as fabric.Canvas;
-
-  target.setCoords();
-
-  if (target && target.left) {
-    target.left = Math.max(
-      0,
-      Math.min(
-        target.left,
-        (canvas.width || 0) - (target.getScaledWidth() || target.width || 0)
-      )
-    );
-  }
-
-  if (target && target.top) {
-    target.top = Math.max(
-      0,
-      Math.min(
-        target.top,
-        (canvas.height || 0) - (target.getScaledHeight() || target.height || 0)
-      )
-    );
-  }
+  const target = options.target as fabric.Object | undefined;
+  target?.setCoords();
 };
 
 // Set element attributes when a new selection is created
