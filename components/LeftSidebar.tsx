@@ -2,9 +2,10 @@
 
 import Image from "next/image";
 import { fabric } from "fabric";
+import { Layers3 } from "lucide-react";
 
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { getShapeInfo } from "@/lib/utils";
+import { getLayerLabel, getShapeInfo } from "@/lib/utils";
 
 type Props = {
   allShapes: Array<any>;
@@ -27,6 +28,7 @@ const LeftSidebar = ({ allShapes, fabricRef, activeObjectId }: Props) => {
   };
 
   const count = allShapes?.length ?? 0;
+  const layers = [...(allShapes ?? [])].reverse();
 
   return (
     <aside className="flex h-full select-none flex-col bg-primary-black text-primary-grey-300">
@@ -40,26 +42,19 @@ const LeftSidebar = ({ allShapes, fabricRef, activeObjectId }: Props) => {
       </header>
 
       {count === 0 ? (
-        <div className="flex flex-col items-center justify-center gap-2 py-10 text-center">
-          <Image
-            src="/assets/rectangle.svg"
-            alt="empty"
-            width={24}
-            height={24}
-            className="opacity-30"
-          />
-          <p className="text-xs text-primary-grey-300 opacity-60">
-            No layers yet.
-            <br />
-            Start drawing.
+        <div className="flex flex-col items-center justify-center gap-3 px-6 py-10 text-center">
+          <Layers3 className="h-6 w-6 opacity-30" />
+          <p className="text-xs text-primary-grey-300 opacity-70">
+            No layers yet. Draw a shape, add text, or drop in an image to build your board.
           </p>
         </div>
       ) : (
         <ScrollArea className="flex-1">
           <div className="flex flex-col gap-0.5 px-2 py-2">
-            {allShapes?.map((shape: any) => {
+            {layers.map((shape: any, index: number) => {
               const objectId = shape[1]?.objectId;
               const info = getShapeInfo(shape[1]?.type);
+              const label = getLayerLabel(shape[1] ?? {});
               const isSelected = objectId && objectId === activeObjectId;
               return (
                 <button
@@ -79,7 +74,18 @@ const LeftSidebar = ({ allShapes, fabricRef, activeObjectId }: Props) => {
                     height={14}
                     className={isSelected ? "invert" : "opacity-70"}
                   />
-                  <span className="truncate capitalize">{info.name}</span>
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate">{label}</div>
+                    <div
+                      className={`text-[10px] ${
+                        isSelected
+                          ? "text-primary-black/70"
+                          : "text-primary-grey-300"
+                      }`}
+                    >
+                      {index === 0 ? "Top layer" : "Layer"}
+                    </div>
+                  </div>
                 </button>
               );
             })}

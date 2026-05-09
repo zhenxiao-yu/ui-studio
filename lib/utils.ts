@@ -104,9 +104,31 @@ export const getShapeInfo = (shapeType: string) => {
   }
 };
 
+export const getLayerLabel = (shape: Record<string, any>) => {
+  const type = shape?.type;
+
+  if (type === "i-text") {
+    const text = String(shape?.text || "").trim();
+    return text ? `Text: ${text}` : "Text";
+  }
+
+  if (type === "image") {
+    return "Image";
+  }
+
+  return getShapeInfo(type).name;
+};
+
+const getExportCanvas = () => {
+  const canvas = document.querySelector("#canvas canvas") as HTMLCanvasElement | null;
+  if (!canvas) {
+    throw new Error("Canvas not ready");
+  }
+  return canvas;
+};
+
 export const exportToPng = () => {
-  const canvas = document.querySelector("canvas");
-  if (!canvas) return;
+  const canvas = getExportCanvas();
   const link = document.createElement("a");
   link.download = "canvas.png";
   link.href = canvas.toDataURL("image/png");
@@ -115,9 +137,7 @@ export const exportToPng = () => {
 
 // Function to export the canvas content to a PDF file
 export const exportToPdf = () => {
-  const canvas = document.querySelector("canvas");
-
-  if (!canvas) return;
+  const canvas = getExportCanvas();
 
   // Create a new jsPDF instance with landscape orientation
   const doc = new jsPDF({

@@ -15,6 +15,8 @@ const Export = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const canvasObjects = useStorage((root) => root.canvasObjects);
+  const objectCount = canvasObjects?.size ?? 0;
+  const hasObjects = objectCount > 0;
 
   const replaceObjects = useMutation(
     ({ storage }, entries: Array<[string, unknown]>) => {
@@ -24,6 +26,10 @@ const Export = () => {
   );
 
   const handlePng = async () => {
+    if (!hasObjects) {
+      toast.info("Add something to the board before exporting");
+      return;
+    }
     setPngLoading(true);
     try {
       exportToPng();
@@ -36,6 +42,10 @@ const Export = () => {
   };
 
   const handlePdf = async () => {
+    if (!hasObjects) {
+      toast.info("Add something to the board before exporting");
+      return;
+    }
     setPdfLoading(true);
     try {
       exportToPdf();
@@ -48,7 +58,7 @@ const Export = () => {
   };
 
   const handleExportJson = () => {
-    if (!canvasObjects) {
+    if (!hasObjects || !canvasObjects) {
       toast.error("Nothing to export yet");
       return;
     }
@@ -100,7 +110,7 @@ const Export = () => {
     <div className="flex flex-col gap-2 px-4 py-3">
       <Button
         variant="outline"
-        disabled={pngLoading}
+        disabled={pngLoading || !hasObjects}
         className="w-full border border-primary-grey-100 hover:bg-primary-green hover:text-primary-black disabled:opacity-50"
         onClick={handlePng}
       >
@@ -109,7 +119,7 @@ const Export = () => {
       </Button>
       <Button
         variant="outline"
-        disabled={pdfLoading}
+        disabled={pdfLoading || !hasObjects}
         className="w-full border border-primary-grey-100 hover:bg-primary-green hover:text-primary-black disabled:opacity-50"
         onClick={handlePdf}
       >
@@ -118,6 +128,7 @@ const Export = () => {
       </Button>
       <Button
         variant="outline"
+        disabled={!hasObjects}
         className="w-full border border-primary-grey-100 hover:bg-primary-green hover:text-primary-black"
         onClick={handleExportJson}
       >
@@ -141,7 +152,9 @@ const Export = () => {
       />
       <p className="flex items-center gap-1 text-[10px] text-primary-grey-300">
         <FileJson className="h-3 w-3" />
-        Import replaces the current board.
+        {hasObjects
+          ? `${objectCount} object${objectCount === 1 ? "" : "s"} ready to export.`
+          : "Import replaces the current board."}
       </p>
     </div>
   );
