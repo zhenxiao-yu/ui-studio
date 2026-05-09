@@ -73,13 +73,27 @@ export const handleCanvasMouseDown = ({
 }: CanvasMouseDown) => {
   const pointer = canvas.getPointer(options.e);
   const target = canvas.findTarget(options.e, false);
+  const selectedTool = selectedShapeRef.current;
 
   canvas.isDrawingMode = false;
 
-  if (selectedShapeRef.current === "freeform") {
+  if (selectedTool === "freeform") {
     isDrawing.current = true;
     canvas.isDrawingMode = true;
-    canvas.freeDrawingBrush.width = 5;
+    return;
+  }
+
+  if (selectedTool === "select" || !selectedTool) {
+    isDrawing.current = false;
+
+    if (target) {
+      canvas.setActiveObject(target);
+      target.setCoords();
+    } else {
+      canvas.discardActiveObject();
+      canvas.requestRenderAll();
+    }
+
     return;
   }
 
@@ -87,7 +101,7 @@ export const handleCanvasMouseDown = ({
 
   if (
     target &&
-    (target.type === selectedShapeRef.current ||
+    (target.type === selectedTool ||
       target.type === "activeSelection")
   ) {
     isDrawing.current = false;
@@ -175,19 +189,33 @@ export const handleCanvasMouseUp = ({
   isDrawing.current = false;
   if (selectedShapeRef.current === "freeform") return;
 
-  if (shapeRef.current?.objectId) {
-    syncShapeInStorage(shapeRef.current);
+  const createdShape = shapeRef.current as
+    | (fabric.Object & { enterEditing?: () => void; hiddenTextarea?: HTMLTextAreaElement | null })
+    | null;
+  const createdShapeWithId = createdShape as
+    | (typeof createdShape & { objectId?: string })
+    | null;
+
+  if (createdShape && createdShapeWithId?.objectId) {
+    syncShapeInStorage(createdShape);
   }
 
   shapeRef.current = null;
-  activeObjectRef.current = null;
-  selectedShapeRef.current = null;
 
-  if (!canvas.isDrawingMode) {
+  if (selectedShapeRef.current === "text" && createdShape) {
+    canvas.setActiveObject(createdShape);
+    activeObjectRef.current = createdShape;
+    createdShape.enterEditing?.();
+    createdShape.hiddenTextarea?.focus();
+
+    selectedShapeRef.current = null;
     setTimeout(() => {
       setActiveElement(defaultNavElement);
-    }, 700);
+    }, 0);
+    return;
   }
+
+  activeObjectRef.current = createdShape;
 };
 
 // Sync shape with storage when object is modified

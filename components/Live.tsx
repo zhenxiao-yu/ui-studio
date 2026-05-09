@@ -331,10 +331,7 @@ const Live = ({ canvasRef, fabricRef, undo, redo }: Props) => {
         <Comments />
 
         {/* Status bar */}
-        <StatusBar
-          objectCount={objectCount}
-          status={status}
-        />
+        <StatusBar objectCount={objectCount} status={status} />
 
         {/* Zoom controls */}
         <ZoomControls fabricRef={fabricRef} zoom={zoom} />
@@ -401,7 +398,8 @@ const ZoomControls = ({
   };
 
   return (
-    <div className="absolute bottom-3 right-12 flex select-none items-center gap-0.5 rounded-md border border-primary-grey-200 bg-primary-black/80 p-0.5 text-primary-grey-300 shadow-lg backdrop-blur">
+    <div className="pointer-events-none absolute bottom-3 right-12">
+      <div className="pointer-events-auto flex select-none items-center gap-0.5 rounded-md border border-primary-grey-200 bg-primary-black/80 p-0.5 text-primary-grey-300 shadow-lg backdrop-blur">
       <Tooltip>
         <TooltipTrigger asChild>
           <button
@@ -467,6 +465,7 @@ const ZoomControls = ({
           Fit to screen · ⌘ 1
         </TooltipContent>
       </Tooltip>
+      </div>
     </div>
   );
 };
@@ -475,15 +474,21 @@ const ShortcutHint = () => {
   const [open, setOpen] = useState(false);
   const all = [
     ...shortcuts,
-    { key: "5", name: "Select", shortcut: "Click" },
-    { key: "6", name: "Delete shape", shortcut: "Del / ⌫" },
-    { key: "7", name: "Copy", shortcut: "⌘ + C" },
-    { key: "8", name: "Paste", shortcut: "⌘ + V" },
-    { key: "9", name: "Cut", shortcut: "⌘ + X" },
-    { key: "10", name: "Zoom in", shortcut: "⌘ + +" },
-    { key: "11", name: "Zoom out", shortcut: "⌘ + −" },
-    { key: "12", name: "Reset zoom", shortcut: "⌘ + 0" },
-    { key: "13", name: "Fit to screen", shortcut: "⌘ + 1" },
+    { key: "5", name: "Select tool", shortcut: "V" },
+    { key: "6", name: "Pan tool", shortcut: "H / Space drag" },
+    { key: "7", name: "Rectangle", shortcut: "R" },
+    { key: "8", name: "Circle", shortcut: "O" },
+    { key: "9", name: "Line", shortcut: "L" },
+    { key: "10", name: "Text", shortcut: "T" },
+    { key: "11", name: "Brush", shortcut: "P" },
+    { key: "12", name: "Delete shape", shortcut: "Del / ⌫" },
+    { key: "13", name: "Copy", shortcut: "⌘ + C" },
+    { key: "14", name: "Paste", shortcut: "⌘ + V" },
+    { key: "15", name: "Cut", shortcut: "⌘ + X" },
+    { key: "16", name: "Zoom in", shortcut: "⌘ + +" },
+    { key: "17", name: "Zoom out", shortcut: "⌘ + −" },
+    { key: "18", name: "Reset zoom", shortcut: "⌘ + 0" },
+    { key: "19", name: "Fit to screen", shortcut: "⌘ + 1" },
   ];
   return (
     <>
@@ -493,7 +498,7 @@ const ShortcutHint = () => {
             type="button"
             aria-label="Keyboard shortcuts"
             onClick={() => setOpen((v) => !v)}
-            className="absolute bottom-3 right-3 flex h-7 w-7 items-center justify-center rounded-full border border-primary-grey-200 bg-primary-black/80 text-[11px] font-semibold text-white shadow-lg backdrop-blur hover:bg-primary-grey-200"
+            className="pointer-events-auto absolute bottom-3 right-3 flex h-7 w-7 items-center justify-center rounded-full border border-primary-grey-200 bg-primary-black/80 text-[11px] font-semibold text-white shadow-lg backdrop-blur hover:bg-primary-grey-200"
           >
             ?
           </button>
@@ -501,7 +506,7 @@ const ShortcutHint = () => {
         <TooltipContent side="left">Shortcuts</TooltipContent>
       </Tooltip>
       {open && (
-        <div className="absolute bottom-12 right-3 z-50 w-60 rounded-lg border border-primary-grey-200 bg-primary-black/95 p-3 shadow-xl backdrop-blur">
+        <div className="pointer-events-auto absolute bottom-12 right-3 z-50 w-60 rounded-lg border border-primary-grey-200 bg-primary-black/95 p-3 shadow-xl backdrop-blur">
           <div className="mb-2 flex items-center justify-between">
             <span className="text-[10px] font-semibold uppercase tracking-wide text-primary-grey-300">
               Shortcuts

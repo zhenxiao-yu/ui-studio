@@ -86,6 +86,8 @@ const RightSidebar = ({
   const isText = !!elementAttributes.fontSize;
   const showCornerRadius = elementAttributes.cornerRadius !== "";
   const isFreeform = activeTool === "freeform";
+  const isTextTool = activeTool === "text";
+  const isPanTool = activeTool === "pan";
 
   const Header = (
     <header className="flex items-center justify-between border-b border-primary-grey-200 px-4 py-3">
@@ -121,11 +123,25 @@ const RightSidebar = ({
               onValueChange={(values) => setBrushSize(values[0])}
             />
           </div>
+        ) : isTextTool ? (
+          <div className="flex flex-1 flex-col items-center justify-center gap-3 px-6 text-center">
+            <MousePointer2 className="h-6 w-6 opacity-40" />
+            <p className="text-xs leading-relaxed text-primary-grey-300">
+              Click once on the canvas to place text, then type immediately.
+            </p>
+          </div>
+        ) : isPanTool ? (
+          <div className="flex flex-1 flex-col items-center justify-center gap-3 px-6 text-center">
+            <MousePointer2 className="h-6 w-6 opacity-40" />
+            <p className="text-xs leading-relaxed text-primary-grey-300">
+              Drag to move around the board. Press <span className="font-mono text-white">V</span> to return to selection.
+            </p>
+          </div>
         ) : (
           <div className="flex flex-1 flex-col items-center justify-center gap-3 px-6 text-center">
             <MousePointer2 className="h-6 w-6 opacity-40" />
             <p className="text-xs leading-relaxed text-primary-grey-300">
-              Select an object on the canvas to edit its properties.
+              Select an object to edit it, or choose a drawing tool to keep creating.
             </p>
           </div>
         )}

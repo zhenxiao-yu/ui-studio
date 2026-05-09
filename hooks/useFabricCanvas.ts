@@ -95,25 +95,39 @@ export const useFabricCanvas = ({
 
   const isDrawing = useRef(false);
   const shapeRef = useRef<fabric.Object | null>(null);
-  const selectedShapeRef = useRef<string | null>(null);
+  const selectedShapeRef = useRef<string | null>(defaultNavElement.value);
   const activeObjectRef = useRef<fabric.Object | null>(null);
   const isEditingRef = useRef(false);
   const isSpacePressed = useRef(false);
   const isPanning = useRef(false);
   const lastPan = useRef<{ x: number; y: number } | null>(null);
 
-  const [activeElement, setActiveElement] = useState<ActiveElement>({
-    name: "",
-    value: "",
-    icon: "",
-  });
+  const [activeElement, setActiveElement] =
+    useState<ActiveElement>(defaultNavElement);
   const [elementAttributes, setElementAttributes] =
     useState<Attributes>(DEFAULT_ATTRIBUTES);
   const [activeObjectId, setActiveObjectId] = useState<string | null>(null);
   const [brushSize, setBrushSize] = useState(5);
 
+  const syncCanvasInteractionMode = useCallback(() => {
+    const canvas = fabricRef.current;
+    if (!canvas) return;
+
+    const tool = selectedShapeRef.current;
+    const isPanTool = tool === "pan";
+    const isFreeformTool = tool === "freeform";
+
+    canvas.isDrawingMode = isFreeformTool;
+    canvas.defaultCursor =
+      isSpacePressed.current || isPanTool ? "grab" : "default";
+    canvas.selection =
+      !isSpacePressed.current && !isPanTool && !isFreeformTool;
+  }, []);
+
   const handleActiveElement = useCallback(
     (elem: ActiveElement) => {
+      if (!elem || Array.isArray(elem.value)) return;
+
       setActiveElement(elem);
 
       switch (elem?.value) {
@@ -127,7 +141,9 @@ export const useFabricCanvas = ({
           }
           deleteAllShapes();
           fabricRef.current?.clear();
+          selectedShapeRef.current = defaultNavElement.value;
           setActiveElement(defaultNavElement);
+          syncCanvasInteractionMode();
           toast.info("Canvas cleared");
           break;
         }
@@ -137,32 +153,30 @@ export const useFabricCanvas = ({
             fabricRef.current as fabric.Canvas,
             deleteShapeFromStorage
           );
+          selectedShapeRef.current = defaultNavElement.value;
           setActiveElement(defaultNavElement);
+          syncCanvasInteractionMode();
           break;
 
         case "image":
           imageInputRef.current?.click();
+          selectedShapeRef.current = defaultNavElement.value;
           isDrawing.current = false;
-          if (fabricRef.current) {
-            fabricRef.current.isDrawingMode = false;
-          }
+          syncCanvasInteractionMode();
           break;
 
         case "comments":
+          selectedShapeRef.current = defaultNavElement.value;
+          syncCanvasInteractionMode();
           break;
 
         default:
           selectedShapeRef.current = elem?.value as string;
-          if (fabricRef.current) {
-            fabricRef.current.isDrawingMode = elem?.value === "freeform";
-            fabricRef.current.defaultCursor =
-              elem?.value === "pan" ? "grab" : "default";
-            fabricRef.current.selection = elem?.value !== "pan";
-          }
+          syncCanvasInteractionMode();
           break;
       }
     },
-    [deleteAllShapes, deleteShapeFromStorage]
+    [deleteAllShapes, deleteShapeFromStorage, syncCanvasInteractionMode]
   );
 
   const handleImageUploadChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -314,8 +328,7 @@ export const useFabricCanvas = ({
       if (isPanning.current) {
         isPanning.current = false;
         lastPan.current = null;
-        canvas.selection = true;
-        canvas.defaultCursor = isSpacePressed.current ? "grab" : "default";
+        syncCanvasInteractionMode();
         return;
       }
 
@@ -389,8 +402,7 @@ export const useFabricCanvas = ({
         isSpacePressed.current = true;
         const c = fabricRef.current;
         if (c) {
-          c.defaultCursor = "grab";
-          c.selection = false;
+          syncCanvasInteractionMode();
         }
         return;
       }
@@ -432,11 +444,7 @@ export const useFabricCanvas = ({
     const onKeyUp = (e: KeyboardEvent) => {
       if (e.code === "Space") {
         isSpacePressed.current = false;
-        const c = fabricRef.current;
-        if (c) {
-          c.defaultCursor = "default";
-          c.selection = true;
-        }
+        syncCanvasInteractionMode();
       }
     };
 
@@ -451,7 +459,16 @@ export const useFabricCanvas = ({
       window.removeEventListener("keyup", onKeyUp);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [canvasRef]);
+  }, [
+    canvasRef,
+    deleteShapeFromStorage,
+    duplicateActive,
+    handleActiveElement,
+    redo,
+    syncCanvasInteractionMode,
+    syncShapeInStorage,
+    undo,
+  ]);
 
   // Apply the current brush size whenever it changes or freeform tool activates.
   useEffect(() => {
